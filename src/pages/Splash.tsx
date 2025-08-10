@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo.png';
+// Importing the univora.png logo from assets
+import logo from '../assets/univora.png';
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Splash = () => {
             />
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">EduBridge</h1>
+      
           <div className="flex items-center justify-center space-x-1 mb-8 h-8">
             {['learn', 'Discover', 'Build', 'Grow'].map((word, index) => (
               <span 

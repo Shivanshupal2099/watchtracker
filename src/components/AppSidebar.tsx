@@ -3,8 +3,9 @@ import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronLe
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import logo from '../assets/logo.png';
-import bridgelabLogo from '../assets/bridgelab_logo.png';
+import univoraLogo from '../assets/univora.png';
+import univoralabLogo from '../assets/univoralab.png';
+// Logos are now available as univoraLogo and univoralabLogo
 import {
   Sidebar,
   SidebarContent,
@@ -49,14 +50,14 @@ const menuItems = [
     glow: 'shadow-emerald-500/20',
   },
   {
-    title: 'BridgeLab',
+    title: 'UnivoraLab',
     url: '/bridgelab',
     icon: Sparkles,
     gradient: 'from-amber-400 to-orange-500',
     bgGradient: 'from-amber-400/5 to-orange-500/5',
     hoverGradient: 'from-amber-400/10 to-orange-500/10',
     glow: 'shadow-amber-400/20',
-    customIcon: bridgelabLogo,
+    customIcon: univoralabLogo,
   },
   {
     title: 'To-Do',
@@ -104,7 +105,7 @@ export function AppSidebar() {
         }}
       >
         {/* Minimalist Logo Header */}
-        <SidebarHeader className="relative flex items-center justify-center h-24 px-2">
+        <SidebarHeader className="relative flex items-center justify-center h-28 px-2">
           <motion.div 
             className="group/logo relative"
             whileHover={{ 
@@ -121,12 +122,12 @@ export function AppSidebar() {
               }}
             >
               <img 
-                src={logo} 
-                alt="EduBridge Logo" 
+                src={univoraLogo} 
+                alt="UnivoraLab Logo" 
                 className={cn(
-                  "w-12 h-12 object-contain transition-all duration-300",
+                  "w-16 h-16 object-contain transition-all duration-300",
                   "group-hover/logo:scale-110 group-hover/logo:rotate-6",
-                  "drop-shadow-md"
+                  "drop-shadow-lg"
                 )}
               />
               
@@ -180,15 +181,15 @@ export function AppSidebar() {
           )}
         </SidebarHeader>
 
-        <SidebarContent className="flex-1 flex flex-col items-center py-4 space-y-3 px-2">
+        <SidebarContent className="flex-1 flex flex-col items-center py-4 space-y-2 px-2">
           {menuItems.map((item) => (
             <SidebarMenu key={item.title} className="w-full">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate(item.url)}
                   className={cn(
-                    "group relative w-14 h-14 rounded-2xl flex items-center justify-center mx-auto",
-                    "transition-all duration-300 hover:scale-105 hover:shadow-lg",
+                    "group relative w-16 h-16 rounded-2xl flex items-center justify-center mx-auto",
+                    "transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95",
                     location.pathname === item.url 
                       ? `bg-gradient-to-br ${item.gradient} text-white shadow-lg ${item.glow}`
                       : `hover:bg-foreground/5 text-foreground/70`,
@@ -203,7 +204,7 @@ export function AppSidebar() {
                         src={item.customIcon} 
                         alt={item.title} 
                         className={cn(
-                          "w-5 h-5 transition-all duration-300",
+                          "w-6 h-6 transition-all duration-300",
                           location.pathname === item.url 
                             ? 'brightness-0 invert opacity-100' 
                             : 'opacity-80 group-hover:opacity-100',
@@ -214,7 +215,7 @@ export function AppSidebar() {
                   ) : (
                     <item.icon 
                       className={cn(
-                        "w-5 h-5 transition-all duration-300",
+                        "w-6 h-6 transition-all duration-300",
                         location.pathname === item.url 
                           ? 'text-white' 
                           : 'text-foreground/80 group-hover:text-foreground',

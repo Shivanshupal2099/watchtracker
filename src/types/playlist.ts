@@ -65,15 +65,29 @@ export interface StreakData {
   lastCompletedDate?: string;
 }
 
+export interface Audiobook {
+  id: string;
+  title: string;
+  author: string;
+  duration: number; // in minutes
+  progress: number; // percentage 0-100
+  coverImage?: string;
+  currentChapter?: number;
+  totalChapters?: number;
+  lastListened?: string; // ISO date string
+  notes?: string;
+}
+
 export interface Playlist {
   id: string;
   title: string;
   description: string;
-  type: 'video' | 'coding';
+  type: 'video' | 'coding' | 'audiobook';
   thumbnail?: string; // Optional thumbnail URL
   contentType?: 'course' | 'tutorial' | 'lecture' | 'workshop' | 'interview' | 'documentary' | 'conference' | 'webinar' | 'podcast' | 'coding-tutorial' | 'project-walkthrough' | 'tech-talk' | 'live-stream' | 'masterclass' | 'bootcamp' | 'seminar' | 'q&a' | 'review' | 'movie' | 'tv-show' | 'anime' | 'gaming' | 'music' | 'comedy' | 'vlog' | 'reaction' | 'other'; // Type of content in the playlist
   videos: Video[];
   codingQuestions?: CodingQuestion[];
+  audiobooks?: Audiobook[];
   createdAt: string;
   source?: 'all-questions' | 'manual';
   targetQuestionsPerDay?: number; // For accountability

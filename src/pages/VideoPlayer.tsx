@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
-import celebrationLogo from '@/assets/logo.png';
+import celebrationLogo from '@/assets/bridgelab_logo.png';
 
 // Update the YouTube API types at the top of the file
 interface YouTubePlayer {
@@ -2175,43 +2175,14 @@ const VideoPlayer = () => {
     setOpenMobile(false);
   }, [setOpen, setOpenMobile]);
 
-  // Set initial volume and check for saved timestamp on player ready
+  // Set initial volume on player ready
   useEffect(() => {
     if (playerRef.current) {
       playerRef.current.setVolume(volume);
-      
-      // Check for saved timestamp for this video
-      const savedTimestamps = JSON.parse(localStorage.getItem('videoTimestamps') || '{}');
-      const savedTime = savedTimestamps[currentVideo?.id];
-      
-      if (savedTime !== undefined) {
-        // Small delay to ensure player is fully ready
-        const timer = setTimeout(() => {
-          playerRef.current?.seekTo(savedTime, true);
-          toast.info(`Resuming from saved position: ${formatTime(savedTime)}`, {
-            action: {
-              label: 'Dismiss',
-              onClick: () => {}
-            },
-            duration: 5000
-          });
-        }, 1000);
-        
-        return () => clearTimeout(timer);
-      }
     }
-  }, [isPlayerReady, currentVideo?.id]);
+  }, [isPlayerReady]);
 
   const [isPlayerHovered, setIsPlayerHovered] = useState(false);
-  const [hasSavedTimestamp, setHasSavedTimestamp] = useState(false);
-
-  // Check for saved timestamp when video changes
-  useEffect(() => {
-    if (currentVideo?.id) {
-      const savedTimestamps = JSON.parse(localStorage.getItem('videoTimestamps') || '{}');
-      setHasSavedTimestamp(!!savedTimestamps[currentVideo.id]);
-    }
-  }, [currentVideo?.id]);
 
   // Add state for selected quality
   const [selectedQuality, setSelectedQuality] = useState('auto');
@@ -3080,57 +3051,14 @@ const VideoPlayer = () => {
                       {/* Main Controls */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              onClick={markAsComplete}
-                              className={`relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 bg-white text-black border-2 border-black rounded-full font-bold px-6 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2`}
-                              disabled={currentVideo.progress >= 100}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2 text-black" />
-                              {currentVideo.progress >= 100 ? 'Completed' : 'Complete'}
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                if (hasSavedTimestamp) {
-                                  // If timestamp exists, seek to it
-                                  const videoId = currentVideo.id;
-                                  const savedTimestamps = JSON.parse(localStorage.getItem('videoTimestamps') || '{}');
-                                  const savedTime = savedTimestamps[videoId];
-                                  
-                                  if (savedTime !== undefined && playerRef.current) {
-                                    playerRef.current.seekTo(savedTime, true);
-                                    // Remove the saved timestamp after seeking
-                                    delete savedTimestamps[videoId];
-                                    localStorage.setItem('videoTimestamps', JSON.stringify(savedTimestamps));
-                                    setHasSavedTimestamp(false);
-                                    toast.info(`Seeking to saved position: ${formatTime(savedTime)}`);
-                                  }
-                                } else {
-                                  // If no timestamp, save current position
-                                  if (playerRef.current) {
-                                    const currentTime = playerRef.current.getCurrentTime();
-                                    const videoId = currentVideo.id;
-                                    const savedTimestamps = JSON.parse(localStorage.getItem('videoTimestamps') || '{}');
-                                    savedTimestamps[videoId] = currentTime;
-                                    localStorage.setItem('videoTimestamps', JSON.stringify(savedTimestamps));
-                                    setHasSavedTimestamp(true);
-                                    toast.success(`Timestamp saved at ${formatTime(currentTime)}`);
-                                  }
-                                }
-                              }}
-                              className={`relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 rounded-full font-bold px-4 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                                hasSavedTimestamp 
-                                  ? 'bg-green-600 text-white border-2 border-green-600 focus:ring-green-400' 
-                                  : 'bg-blue-600 text-white border-2 border-blue-600 focus:ring-blue-400'
-                              }`}
-                              title={hasSavedTimestamp 
-                                ? 'Click to continue from saved position' 
-                                : 'Click to save current position'}
-                            >
-                              <Clock className="w-4 h-4 mr-2" />
-                              {hasSavedTimestamp ? 'Continue from Saved' : 'Save Timestamp'}
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={markAsComplete}
+                            className={`relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 bg-white text-black border-2 border-black rounded-full font-bold px-6 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2`}
+                            disabled={currentVideo.progress >= 100}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2 text-black" />
+                            {currentVideo.progress >= 100 ? 'Completed' : 'Complete'}
+                          </Button>
                           <div className="h-6 w-px bg-gradient-to-b from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700" />
                           
                         </div>
