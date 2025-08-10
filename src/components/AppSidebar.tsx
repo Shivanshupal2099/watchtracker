@@ -1,4 +1,4 @@
-import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight, Menu } from 'lucide-react';
+import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import bridgelabLogo from '../assets/bridgelab_logo.png';
@@ -9,7 +9,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -74,8 +73,6 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { state, toggleSidebar } = useSidebar();
-  const isOpen = state === 'expanded';
   const [activeHover, setActiveHover] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -123,21 +120,12 @@ export function AppSidebar() {
           "bg-gradient-to-b from-sidebar to-sidebar/80 backdrop-blur-md text-sidebar-foreground border-r border-sidebar-border/20 shadow-2xl",
           "overflow-y-auto overflow-x-hidden scrollbar-hide",
           "md:flex",
-          isOpen ? 'w-24 translate-x-0' : 'w-24 -translate-x-full'
+          "w-24"
         )}
       >
-        {/* Burger Menu Button */}
-        <div className="flex justify-center pt-2 pb-3">
-          <button
-            onClick={toggleSidebar}
-            className="p-2 bg-white/10 dark:bg-black/10 hover:bg-white/20 dark:hover:bg-black/20 rounded-lg transition-all duration-200 hover:scale-105 group"
-            aria-label="Toggle Sidebar"
-          >
-            <Menu className="w-5 h-5 text-sidebar-foreground/70 group-hover:text-sidebar-foreground transition-colors" />
-          </button>
-        </div>
 
-        <SidebarContent className="flex-1 flex flex-col items-center py-6 space-y-4 px-2">
+
+        <SidebarContent className="flex-1 flex flex-col items-center justify-between py-6 px-2">
           {menuItems.map((item) => (
             <SidebarMenu key={item.title} className="w-full">
               <SidebarMenuItem>

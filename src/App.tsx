@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider,SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route, useLocation, useParams, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import Shorts from "./pages/Shorts";
 
 
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -47,9 +47,7 @@ const AppContent = () => {
   const isAuthPage = ['/', '/login', '/create-account', '/landing'].includes(location.pathname);
   const isBridgeLabPage = location.pathname === '/bridgelab';
 
-  // Responsive sidebar state
-  const { state, toggleSidebar } = useSidebar();
-  const isOpen = state === 'expanded';
+
 
   // Check if we're on mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -67,21 +65,11 @@ const AppContent = () => {
     });
   }, []);
 
-  // Top Left Burger Menu Component (visible when sidebar is closed)
-  const TopLeftBurgerMenu = () => (
-    <button
-      onClick={toggleSidebar}
-      className="fixed top-4 left-4 z-50 p-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-      aria-label="Open Sidebar"
-    >
-      <Menu className="w-5 h-5 text-zinc-700 dark:text-zinc-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-    </button>
-  );
+
 
   return (
     <div className="min-h-screen flex w-full">
-      {/* Top Left Burger Menu - Show when sidebar is closed (except on auth pages and BridgeLab page) */}
-      {!isAuthPage && !isBridgeLabPage && !isOpen && !isMobile && <TopLeftBurgerMenu />}
+
       
       {/* Only render sidebar if not auth page and not BridgeLab page */}
       {!isAuthPage && !isBridgeLabPage && <AppSidebar />}
@@ -90,11 +78,9 @@ const AppContent = () => {
           !isAuthPage
             ? isBridgeLabPage
               ? 'ml-0 pb-16' // No left margin on BridgeLab, add bottom padding for footer nav
-              : !isMobile && isOpen
+              : !isMobile
               ? 'ml-24' // Sidebar is visible on desktop
-              : isMobile
-              ? 'ml-0 pb-16' // No left margin on mobile, add bottom padding for footer nav
-              : 'ml-0'  // No margin when sidebar is hidden on desktop
+              : 'ml-0 pb-16' // No left margin on mobile, add bottom padding for footer nav
             : 'w-full'
         }`}
       >
