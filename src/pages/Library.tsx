@@ -28,6 +28,29 @@ const Library = () => {
   const { playlists, addPlaylist, deletePlaylist } = usePlaylists();
   const { theme } = useTheme();
 
+  // Add CSS to ensure proper scrolling
+  useEffect(() => {
+    // Ensure body and html can scroll
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    
+    // Force scrolling to work
+    document.body.style.position = 'relative';
+    document.body.style.minHeight = '100vh';
+    
+    return () => {
+      // Reset styles when component unmounts
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.body.style.position = '';
+      document.body.style.minHeight = '';
+    };
+  }, []);
+
   // Add refresh functionality
   const refreshPlaylists = () => {
     const savedPlaylists = localStorage.getItem('youtubePlaylists');
@@ -147,19 +170,33 @@ const Library = () => {
   });
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 relative overflow-x-hidden ${
-      theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950' 
-        : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-    }`}>
+    <>
+      <style jsx>{`
+        html, body {
+          overflow: auto !important;
+          height: auto !important;
+          min-height: 100vh !important;
+        }
+        .library-page {
+          overflow-y: auto !important;
+          min-height: 100vh !important;
+          height: auto !important;
+        }
+      `}</style>
+      <div className={`library-page min-h-screen transition-colors duration-300 relative overflow-x-hidden overflow-y-auto ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950' 
+          : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
+      }`} style={{ minHeight: '100vh', height: 'auto' }}>
       {/* Decorative background shapes */}
       <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-gradient-to-br from-blue-400/20 to-purple-400/10 rounded-full blur-3xl z-0" />
       <div className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-gradient-to-tr from-indigo-300/20 to-pink-300/10 rounded-full blur-2xl z-0" />
-      <div className="container mx-auto px-4 relative z-10 mt-12">
-        <div className="flex flex-col">
+      
+      <div className="container mx-auto px-4 relative z-10 pt-12 pb-8" style={{ minHeight: '100vh', height: 'auto' }}>
+        <div className="flex flex-col" style={{ minHeight: '100vh' }}>
           {playlists.length > 0 && (
-            <div className="flex flex-col">
-              <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1">
                 <div className="flex flex-col items-center w-full mb-8">
                   <div className="w-full max-w-4xl mx-auto flex items-center justify-center gap-3 transition-all duration-300">
                     <div className="relative group flex-1">
@@ -391,6 +428,7 @@ const Library = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 

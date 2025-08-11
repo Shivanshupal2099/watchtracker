@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 // 1. Import the logo at the top
 import BridgeLabLogo from '../assets/bridgelab_logo.png';
 
@@ -530,6 +531,20 @@ const sampleChatMessages = {
 };
 
 const Classroom: React.FC = () => {
+  const { theme } = useTheme();
+  
+  // Theme-aware styling variables
+  const bgGradient = theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-white';
+  const cardBg = theme === 'dark' ? 'bg-gray-800/95 border-gray-700/60 shadow-lg' : 'bg-white';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-black';
+  const textMuted = theme === 'dark' ? 'text-gray-300' : 'text-gray-500';
+  const headerGradient = theme === 'dark' ? 'bg-gray-900/95' : 'bg-white';
+  const statCardGradient = theme === 'dark' ? 'bg-gray-800/95' : 'bg-white';
+  const rankCardGradient = theme === 'dark' ? 'bg-gray-800/95' : 'bg-white';
+  const rankCardHover = theme === 'dark'
+    ? 'relative transition-all duration-300 border border-gray-700/60 shadow-lg rounded-lg bg-gray-800/95'
+    : 'relative transition-all duration-300 border border-gray-200 shadow-sm rounded-lg bg-white';
+  
   const [communications, setCommunications] = useState(dummyCommunications);
   const [newCommunication, setNewCommunication] = useState({ 
     title: '', 
@@ -1821,13 +1836,17 @@ const Classroom: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 md:px-8 flex flex-col items-center">
+    <div className={`min-h-screen py-12 px-4 md:px-8 flex flex-col items-center transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950' 
+        : 'bg-white'
+    }`}>
       <div className="w-full max-w-6xl relative">
         {/* Status Feature (moved above top-right controls) */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-black flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-black" /> Status
+            <h2 className={`text-xl font-bold flex items-center gap-2 ${textColor}`}>
+              <BarChart3 className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-black'}`} /> Status
             </h2>
           </div>
           <StatusCarousel />
@@ -1907,38 +1926,74 @@ const Classroom: React.FC = () => {
             </Button>
           </DialogContent>
         </Dialog>
-        <Card className="w-full shadow-2xl border-0 bg-white/95 rounded-3xl">
+        <Card className={`w-full shadow-2xl border-0 rounded-3xl ${
+          theme === 'dark' 
+            ? 'bg-gray-800/95 border-gray-700/60' 
+            : 'bg-white/95'
+        }`}>
           <CardHeader className="flex flex-col items-center gap-3 pb-4">
           </CardHeader>
           <Separator />
           <CardContent className="p-6">
             <Tabs defaultValue="classwork" className="w-full">
-              <TabsList className="mb-6 flex justify-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-2 shadow-lg border border-gray-200 max-w-5xl mx-auto">
-                <TabsTrigger value="classwork" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+              <TabsList className={`mb-6 flex justify-center gap-2 rounded-2xl p-2 shadow-lg border max-w-5xl mx-auto ${
+                theme === 'dark'
+                  ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600'
+                  : 'bg-gradient-to-r from-blue-50 to-purple-50 border-gray-200'
+              }`}>
+                <TabsTrigger value="classwork" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <CheckCircle className="w-4 h-4" />
                   <span>Classwork</span>
                 </TabsTrigger>
-                <TabsTrigger value="people" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="people" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <Users className="w-4 h-4" />
                   <span>People</span>
                 </TabsTrigger>
-                <TabsTrigger value="grades" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="grades" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <BarChart3 className="w-4 h-4" />
                   <span>Status</span>
                 </TabsTrigger>
-                <TabsTrigger value="communication" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="communication" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <MessageSquare className="w-4 h-4" />
                   <span>Communication</span>
                 </TabsTrigger>
-                <TabsTrigger value="study-materials" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="study-materials" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <Library className="w-4 h-4" />
                   <span>Study Materials</span>
                 </TabsTrigger>
-                <TabsTrigger value="events" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="events" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <CalendarDays className="w-4 h-4" />
                   <span>Events</span>
                 </TabsTrigger>
-                <TabsTrigger value="activity" className="flex items-center gap-2 px-5 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-xs font-medium hover:bg-white/50">
+                <TabsTrigger value="activity" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
                   <Sparkles className="w-4 h-4" />
                   <span>Activity</span>
                 </TabsTrigger>
@@ -1952,8 +2007,8 @@ const Classroom: React.FC = () => {
                       <CheckCircle className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-bold text-gray-900 mb-1">Classwork & Assignments</CardTitle>
-                      <p className="text-gray-600 text-base">Track your assignments and upcoming deadlines</p>
+                      <CardTitle className={`text-2xl font-bold mb-1 ${textColor}`}>Classwork & Assignments</CardTitle>
+                      <p className={`text-base ${textMuted}`}>Track your assignments and upcoming deadlines</p>
                     </div>
                   </div>
                 </div>
@@ -1962,16 +2017,28 @@ const Classroom: React.FC = () => {
                     const countdown = getCountdown(assn.due);
                     const upload = assignmentUploads[assn.id];
                     return (
-                      <Card key={assn.id} className="border-0 bg-gradient-to-r from-green-50 to-blue-50 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group">
+                      <Card key={assn.id} className={`border-0 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group ${
+                        theme === 'dark'
+                          ? 'bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-gray-700/60'
+                          : 'bg-gradient-to-r from-green-50 to-blue-50'
+                      }`}>
                         <CardHeader className="flex flex-row items-center gap-3 pb-3">
                           <div className="p-2 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 shadow-md">
                             <FileText className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1">
-                            <CardTitle className="text-lg text-gray-900 font-bold group-hover:text-blue-700 transition-colors">{assn.title}</CardTitle>
-                            <p className="text-gray-600 text-sm mt-1">{assn.description}</p>
+                            <CardTitle className={`text-lg font-bold transition-colors ${
+                              theme === 'dark'
+                                ? 'text-white group-hover:text-blue-400'
+                                : 'text-gray-900 group-hover:text-blue-700'
+                            }`}>{assn.title}</CardTitle>
+                            <p className={`text-sm mt-1 ${textMuted}`}>{assn.description}</p>
                           </div>
-                          <Badge className="bg-white/80 border-green-200 text-green-700 font-semibold px-3 py-1 shadow-md" variant="outline">
+                          <Badge className={`font-semibold px-3 py-1 shadow-md ${
+                            theme === 'dark'
+                              ? 'bg-gray-700/80 border-gray-600 text-green-400'
+                              : 'bg-white/80 border-green-200 text-green-700'
+                          }`} variant="outline">
                             {assn.status}
                           </Badge>
                           <Button size="sm" className="ml-2 bg-blue-500 text-white" onClick={() => navigate('/view-create')}>
@@ -1980,17 +2047,25 @@ const Classroom: React.FC = () => {
                         </CardHeader>
                         <CardContent className="pt-0">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className={`flex items-center gap-2 ${textMuted}`}>
                               <Calendar className="w-4 h-4" />
                               <span className="font-medium text-sm">Due: {assn.due}</span>
                               {/* Countdown Timer */}
                               {countdown ? (
-                                <span className="ml-4 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                <span className={`ml-4 px-2 py-1 rounded text-xs font-semibold ${
+                                  theme === 'dark'
+                                    ? 'bg-blue-900/50 text-blue-300'
+                                    : 'bg-blue-100 text-blue-700'
+                                }`}>
                                   {countdown.days > 0 && `${countdown.days}d `}
                                   {countdown.hours}h {countdown.minutes}m {countdown.seconds}s left
                                 </span>
                               ) : (
-                                <span className="ml-4 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Overdue</span>
+                                <span className={`ml-4 px-2 py-1 rounded text-xs font-semibold ${
+                                  theme === 'dark'
+                                    ? 'bg-red-900/50 text-red-300'
+                                    : 'bg-red-100 text-red-700'
+                                }`}>Overdue</span>
                               )}
                             </div>
                             {/* Upload Work Feature */}
@@ -2013,7 +2088,11 @@ const Classroom: React.FC = () => {
                                 {upload ? 'Change File' : 'Upload Work'}
                               </Button>
                               {upload && (
-                                <span className="text-xs text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 flex items-center gap-2">
+                                <span className={`text-xs rounded px-2 py-1 flex items-center gap-2 ${
+                                  theme === 'dark'
+                                    ? 'text-gray-300 bg-gray-700 border border-gray-600'
+                                    : 'text-gray-700 bg-white border border-gray-200'
+                                }`}>
                                   {upload.name}
                                   <Button size="icon" variant="ghost" className="h-5 w-5 p-0 text-red-500" onClick={() => removeAssignmentFile(assn.id)}>
                                     <X className="w-3 h-3" />
@@ -2037,34 +2116,62 @@ const Classroom: React.FC = () => {
                       <Users className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-bold text-gray-900 mb-1">Class Members</CardTitle>
-                      <p className="text-gray-600 text-base">Connect with your classmates and teachers</p>
+                      <CardTitle className={`text-2xl font-bold mb-1 ${textColor}`}>Class Members</CardTitle>
+                      <p className={`text-base ${textMuted}`}>Connect with your classmates and teachers</p>
                     </div>
                   </div>
                 </div>
 
                 {/* New Tabs for Teachers/Students */}
                 <Tabs defaultValue="teachers" className="w-full">
-                  <TabsList className="mb-8 flex gap-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-2 shadow-lg border border-gray-200 max-w-lg mx-auto relative">
-                    <TabsTrigger value="teachers" className="flex items-center gap-2 px-6 py-2.5 rounded-xl relative data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-700 data-[state=active]:font-semibold transition-all duration-200 text-base font-medium hover:bg-white/50">
+                  <TabsList className={`mb-8 flex gap-4 rounded-2xl p-2 shadow-lg border max-w-lg mx-auto relative ${
+                    theme === 'dark'
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600'
+                      : 'bg-gradient-to-r from-purple-50 to-pink-50 border-gray-200'
+                  }`}>
+                    <TabsTrigger value="teachers" className={`flex items-center gap-2 px-6 py-2.5 rounded-xl relative transition-all duration-200 text-base font-medium ${
+                      theme === 'dark'
+                        ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-lg data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                        : 'data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                    }`}>
                       <UserCheck className="w-5 h-5" />
                       Teachers
-                      <span className="ml-2 bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-bold">{dummyPeople.filter(p => p.role === 'Teacher').length}</span>
-                      <span className="absolute left-0 right-0 -bottom-2 mx-auto w-2/3 h-1 rounded-full bg-blue-200 data-[state=active]:block hidden"></span>
+                      <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
+                        theme === 'dark'
+                          ? 'bg-blue-900/50 text-blue-300'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>{dummyPeople.filter(p => p.role === 'Teacher').length}</span>
+                      <span className={`absolute left-0 right-0 -bottom-2 mx-auto w-2/3 h-1 rounded-full ${
+                        theme === 'dark' ? 'bg-blue-600' : 'bg-blue-200'
+                      } data-[state=active]:block hidden`}></span>
                     </TabsTrigger>
-                    <TabsTrigger value="students" className="flex items-center gap-2 px-6 py-2.5 rounded-xl relative data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-green-700 data-[state=active]:font-semibold transition-all duration-200 text-base font-medium hover:bg-white/50">
+                    <TabsTrigger value="students" className={`flex items-center gap-2 px-6 py-2.5 rounded-xl relative transition-all duration-200 text-base font-medium ${
+                      theme === 'dark'
+                        ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-lg data-[state=active]:text-green-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                        : 'data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-green-700 data-[state=active]:font-semibold hover:bg-white/50'
+                    }`}>
                       <Users className="w-5 h-5" />
                       Students
-                      <span className="ml-2 bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-bold">{dummyPeople.filter(p => p.role === 'Student').length}</span>
-                      <span className="absolute left-0 right-0 -bottom-2 mx-auto w-2/3 h-1 rounded-full bg-green-200 data-[state=active]:block hidden"></span>
+                      <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
+                        theme === 'dark'
+                          ? 'bg-green-900/50 text-green-300'
+                          : 'bg-green-100 text-green-700'
+                      }`}>{dummyPeople.filter(p => p.role === 'Student').length}</span>
+                      <span className={`absolute left-0 right-0 -bottom-2 mx-auto w-2/3 h-1 rounded-full ${
+                        theme === 'dark' ? 'bg-green-600' : 'bg-green-200'
+                      } data-[state=active]:block hidden`}></span>
                     </TabsTrigger>
                   </TabsList>
 
                   {/* Teachers Tab */}
                   <TabsContent value="teachers">
                     <div className="mb-6 text-center">
-                      <h2 className="text-xl font-bold text-blue-900 mb-1">Meet Your Teachers</h2>
-                      <p className="text-blue-700 text-base">Get to know your instructors and reach out for help anytime.</p>
+                      <h2 className={`text-xl font-bold mb-1 ${
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
+                      }`}>Meet Your Teachers</h2>
+                      <p className={`text-base ${
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-700'
+                      }`}>Get to know your instructors and reach out for help anytime.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {dummyPeople.filter(person => person.role === 'Teacher').map((teacher, index) => (
@@ -2124,8 +2231,12 @@ const Classroom: React.FC = () => {
                   {/* Students Tab */}
                   <TabsContent value="students">
                     <div className="mb-6 text-center">
-                      <h2 className="text-xl font-bold text-green-900 mb-1">Meet Your Classmates</h2>
-                      <p className="text-green-700 text-base">See who's in your class and connect for group work or study sessions.</p>
+                      <h2 className={`text-xl font-bold mb-1 ${
+                        theme === 'dark' ? 'text-green-300' : 'text-green-900'
+                      }`}>Meet Your Classmates</h2>
+                      <p className={`text-base ${
+                        theme === 'dark' ? 'text-green-400' : 'text-green-700'
+                      }`}>See who's in your class and connect for group work or study sessions.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {dummyPeople.filter(person => person.role === 'Student').map((student, index) => (
@@ -2285,31 +2396,41 @@ const Classroom: React.FC = () => {
                       <BarChart3 className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-bold text-gray-900 mb-1">Assignment Status</CardTitle>
-                      <p className="text-gray-600 text-base">Track student progress and assignment submissions</p>
+                      <CardTitle className={`text-2xl font-bold mb-1 ${textColor}`}>Assignment Status</CardTitle>
+                      <p className={`text-base ${textMuted}`}>Track student progress and assignment submissions</p>
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-6">
                   {dummyAssignments.map(assignment => (
-                    <Card key={assignment.id} className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300">
-                      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+                    <Card key={assignment.id} className={`border-0 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 ${
+                      theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+                    }`}>
+                      <CardHeader className={`border-b ${
+                        theme === 'dark'
+                          ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-gray-700'
+                          : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-100'
+                      }`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 shadow-md">
                               <FileText className="w-5 h-5 text-white" />
                             </div>
                           <div>
-                              <CardTitle className="text-xl font-bold text-gray-900">{assignment.title}</CardTitle>
-                            <p className="text-gray-600 text-sm mt-1">{assignment.description}</p>
+                              <CardTitle className={`text-xl font-bold ${textColor}`}>{assignment.title}</CardTitle>
+                            <p className={`text-sm mt-1 ${textMuted}`}>{assignment.description}</p>
                               <div className="flex items-center gap-2 mt-2">
-                                <Calendar className="w-4 h-4 text-gray-500" />
-                                <span className="text-xs text-gray-500 font-medium">Due: {assignment.due}</span>
+                                <Calendar className={`w-4 h-4 ${textMuted}`} />
+                                <span className={`text-xs font-medium ${textMuted}`}>Due: {assignment.due}</span>
                           </div>
                             </div>
                           </div>
-                          <Badge variant="outline" className="bg-white/80 border-blue-200 text-blue-700 font-semibold px-4 py-2 text-sm shadow-md">
+                          <Badge variant="outline" className={`font-semibold px-4 py-2 text-sm shadow-md ${
+                            theme === 'dark'
+                              ? 'bg-gray-700/80 border-gray-600 text-blue-400'
+                              : 'bg-white/80 border-blue-200 text-blue-700'
+                          }`}>
                             {assignment.status}
                           </Badge>
                         </div>
@@ -2317,18 +2438,22 @@ const Classroom: React.FC = () => {
                       <CardContent className="p-0">
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-gray-50/50">
-                              <TableHead className="font-bold text-gray-900 text-sm">Student</TableHead>
-                              <TableHead className="font-bold text-gray-900 text-sm">Status</TableHead>
-                              <TableHead className="font-bold text-gray-900 text-sm">Submitted</TableHead>
-                              <TableHead className="font-bold text-gray-900 text-sm">Grade</TableHead>
-                              <TableHead className="font-bold text-gray-900 text-sm">Marks</TableHead>
-                              <TableHead className="font-bold text-gray-900 text-sm">Feedback</TableHead>
+                            <TableRow className={theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50/50'}>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Student</TableHead>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Status</TableHead>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Submitted</TableHead>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Grade</TableHead>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Marks</TableHead>
+                              <TableHead className={`font-bold text-sm ${textColor}`}>Feedback</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {dummyGrades.filter(grade => grade.assignment === assignment.title).map((grade, index) => (
-                              <TableRow key={index} className="hover:bg-blue-50/30 border-b border-gray-100 transition-colors">
+                              <TableRow key={index} className={`hover:bg-blue-50/30 border-b transition-colors ${
+                                theme === 'dark' 
+                                  ? 'hover:bg-blue-900/30 border-gray-700' 
+                                  : 'hover:bg-blue-50/30 border-gray-100'
+                              }`}>
                                 <TableCell>
                                   <div className="flex items-center gap-3">
                                     <Avatar className="shadow-lg border-2 border-white h-10 w-10">
@@ -2336,7 +2461,7 @@ const Classroom: React.FC = () => {
                                         {grade.name[0]}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="font-semibold text-gray-900 text-sm">{grade.name}</span>
+                                    <span className={`font-semibold text-sm ${textColor}`}>{grade.name}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell>
@@ -2344,44 +2469,56 @@ const Classroom: React.FC = () => {
                                     variant={grade.status === 'checked' ? 'default' : 'secondary'}
                                     className={`${
                                       grade.status === 'checked' 
-                                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200' 
-                                        : 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 border-yellow-200'
+                                        ? theme === 'dark'
+                                          ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50 text-green-300 border-green-600'
+                                          : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200'
+                                        : theme === 'dark'
+                                          ? 'bg-gradient-to-r from-yellow-900/50 to-orange-900/50 text-yellow-300 border-yellow-600'
+                                          : 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 border-yellow-200'
                                     } font-semibold px-3 py-1 text-xs shadow-md`}
                                   >
                                     {grade.status === 'checked' ? '✅ Checked' : '⏳ Pending'}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <span className="text-gray-600 font-medium text-sm">
+                                  <span className={`font-medium text-sm ${textMuted}`}>
                                     {grade.submittedAt ? grade.submittedAt : 'Not submitted'}
                                   </span>
                                 </TableCell>
                                 <TableCell>
                                   {grade.grade ? (
-                                    <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 font-bold text-lg px-3 py-1 shadow-md">
+                                    <Badge variant="outline" className={`font-bold text-lg px-3 py-1 shadow-md ${
+                                      theme === 'dark'
+                                        ? 'bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border-blue-600 text-blue-300'
+                                        : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700'
+                                    }`}>
                                       {grade.grade}
                                     </Badge>
                                   ) : (
-                                    <span className="text-gray-400">-</span>
+                                    <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>-</span>
                                   )}
                                 </TableCell>
                                 <TableCell>
                                   {grade.marks ? (
-                                    <span className="font-bold text-gray-900 text-sm">{grade.marks}</span>
+                                    <span className={`font-bold text-sm ${textColor}`}>{grade.marks}</span>
                                   ) : (
-                                    <span className="text-gray-400">-</span>
+                                    <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>-</span>
                                   )}
                                 </TableCell>
                                 <TableCell>
                                   {grade.feedback ? (
                                     <div className="max-w-xs">
-                                      <p className="text-xs text-gray-700 line-clamp-2">{grade.feedback}</p>
-                                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 p-0 h-auto mt-1 font-semibold text-xs">
+                                      <p className={`text-xs line-clamp-2 ${
+                                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                                      }`}>{grade.feedback}</p>
+                                      <Button variant="ghost" size="sm" className={`p-0 h-auto mt-1 font-semibold text-xs ${
+                                        theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                                      }`}>
                                         View full feedback
                                       </Button>
                                     </div>
                                   ) : (
-                                    <span className="text-gray-400">-</span>
+                                    <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>-</span>
                                   )}
                                 </TableCell>
                               </TableRow>
@@ -2395,11 +2532,13 @@ const Classroom: React.FC = () => {
 
                 {filteredMaterials.length === 0 && (
                   <div className="text-center py-16">
-                    <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                      <FolderOpen className="w-12 h-12 text-gray-400" />
+                    <div className={`rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 ${
+                      theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                    }`}>
+                      <FolderOpen className={`w-12 h-12 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
                   </div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No study materials found</h3>
-                    <p className="text-gray-500 mb-6">Try adjusting your search or upload the first material!</p>
+                    <h3 className={`text-xl font-semibold mb-2 ${textColor}`}>No study materials found</h3>
+                    <p className={`mb-6 ${textMuted}`}>Try adjusting your search or upload the first material!</p>
                     <Button onClick={() => setShowUploadForm(true)} className="bg-blue-600 text-white rounded-full px-8 py-3">
                       <Upload className="w-5 h-5 mr-2" />
                       Upload First Material
@@ -2420,24 +2559,34 @@ const Classroom: React.FC = () => {
                       <MessageSquare className="w-6 h-6 text-white" />
                   </div>
                     <div>
-                          <CardTitle className="text-2xl font-bold text-gray-900 mb-1">Teacher Messenger</CardTitle>
-                          <p className="text-gray-600 text-base">Chat with your teachers for questions, clarifications, and support</p>
+                          <CardTitle className={`text-2xl font-bold mb-1 ${textColor}`}>Teacher Messenger</CardTitle>
+                          <p className={`text-base ${textMuted}`}>Chat with your teachers for questions, clarifications, and support</p>
                 </div>
                       </div>
                       </div>
 
                     {/* Search and Filter Bar */}
-                    <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl shadow-lg">
+                    <Card className={`border rounded-2xl shadow-lg ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border-indigo-700'
+                        : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'
+                    }`}>
                   <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row gap-4">
                           {/* Search */}
                           <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-500 w-5 h-5" />
+                            <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                              theme === 'dark' ? 'text-indigo-400' : 'text-indigo-500'
+                            }`} />
                             <Input
                               placeholder="Search teachers by name or subject..."
                               value={teacherSearchQuery}
                               onChange={(e) => setTeacherSearchQuery(e.target.value)}
-                              className="pl-12 py-3 text-lg border-2 border-indigo-200 focus:border-indigo-400 bg-white/90 shadow-sm rounded-xl"
+                              className={`pl-12 py-3 text-lg border-2 shadow-sm rounded-xl ${
+                                theme === 'dark'
+                                  ? 'border-indigo-600 focus:border-indigo-400 bg-gray-800/90 text-white'
+                                  : 'border-indigo-200 focus:border-indigo-400 bg-white/90'
+                              }`}
                             />
                           </div>
                           
@@ -2445,7 +2594,11 @@ const Classroom: React.FC = () => {
                           <select
                             value={selectedSubject}
                             onChange={(e) => setSelectedSubject(e.target.value)}
-                            className="px-6 py-3 border-2 border-indigo-200 focus:border-indigo-400 rounded-xl bg-white/90 shadow-sm text-lg font-medium"
+                            className={`px-6 py-3 border-2 rounded-xl shadow-sm text-lg font-medium ${
+                              theme === 'dark'
+                                ? 'border-indigo-600 focus:border-indigo-400 bg-gray-800/90 text-white'
+                                : 'border-indigo-200 focus:border-indigo-400 bg-white/90'
+                            }`}
                           >
                             <option value="all">📚 All Subjects</option>
                             <option value="mathematics">📐 Mathematics</option>
@@ -2455,22 +2608,32 @@ const Classroom: React.FC = () => {
                           </select>
                           
                           {/* Quick Stats */}
-                          <div className="flex items-center gap-4 px-4 py-2 bg-white/80 rounded-xl border border-indigo-200">
+                          <div className={`flex items-center gap-4 px-4 py-2 rounded-xl border ${
+                            theme === 'dark'
+                              ? 'bg-gray-800/80 border-indigo-700'
+                              : 'bg-white/80 border-indigo-200'
+                          }`}>
                             <div className="text-center">
-                              <div className="text-lg font-bold text-indigo-600">{teachers.length}</div>
-                              <div className="text-xs text-gray-600">Teachers</div>
+                              <div className={`text-lg font-bold ${
+                                theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'
+                              }`}>{teachers.length}</div>
+                              <div className={`text-xs ${textMuted}`}>Teachers</div>
                             </div>
                             <div className="text-center">
-                              <div className="text-lg font-bold text-green-600">
+                              <div className={`text-lg font-bold ${
+                                theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                              }`}>
                                 {teachers.filter(t => t.status === 'online').length}
                               </div>
-                              <div className="text-xs text-gray-600">Online</div>
+                              <div className={`text-xs ${textMuted}`}>Online</div>
                             </div>
                             <div className="text-center">
-                              <div className="text-lg font-bold text-red-600">
+                              <div className={`text-lg font-bold ${
+                                theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                              }`}>
                                 {teachers.reduce((sum, t) => sum + t.unreadCount, 0)}
                               </div>
-                              <div className="text-xs text-gray-600">Unread</div>
+                              <div className={`text-xs ${textMuted}`}>Unread</div>
                             </div>
                           </div>
                         </div>
