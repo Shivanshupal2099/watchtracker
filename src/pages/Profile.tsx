@@ -149,6 +149,9 @@ const Profile = () => {
     longestStreak: 0,
     lastActivityDate: new Date().toISOString().split('T')[0]
   });
+  
+  const [showProgressCard, setShowProgressCard] = useState(false);
+  const [progressCard, setProgressCard] = useState<ProgressCard | null>(null);
 
   // Mock data for other users - In a real app, this would come from an API
   const mockUsers = [
@@ -486,12 +489,17 @@ const Profile = () => {
       },
       theme: theme === 'dark' ? 'dark' : 'light'
     };
+    setProgressCard(cardData);
     shareProgressCard(cardData);
     setShowProgressCard(true);
   };
 
   // Update shareProgressCard function
   const shareProgressCard = async (cardData?: ProgressCard) => {
+    if (cardData) {
+      setProgressCard(cardData);
+    }
+    
     try {
       const cardElement = document.getElementById('progress-card');
       if (!cardElement) return;
@@ -512,7 +520,7 @@ const Profile = () => {
       link.click();
 
       // Share on social media
-      if (navigator.share) {
+      if (navigator.share && progressCard) {
         await navigator.share({
           title: 'My Learning Progress',
           text: `Check out my learning progress on ${progressCard.platformName}! I'm at ${progressCard.achievements.level} level with ${progressCard.totalProgress.coins} coins!`,
@@ -1365,6 +1373,3 @@ const Profile = () => {
 
 export default Profile;
 
-function setShowProgressCard(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}
