@@ -8,6 +8,7 @@ import AddPlaylistModal from '@/components/AddPlaylistModal';
 import { useTheme } from 'next-themes';
 import { usePlaylists } from '@/context/PlaylistContext';
 import { Playlist } from '@/types/playlist';
+import Head from 'next/head';
 
 interface WatchTimeData {
   totalWatchTime: number;  // Total accumulated watch time in milliseconds
@@ -151,15 +152,69 @@ const Library = () => {
   });
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 relative overflow-x-hidden ${
-      theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950' 
-        : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-    }`}>
-      {/* Decorative background shapes */}
-      <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-gradient-to-br from-blue-400/20 to-purple-400/10 rounded-full blur-3xl z-0" />
-      <div className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-gradient-to-tr from-indigo-300/20 to-pink-300/10 rounded-full blur-2xl z-0" />
-      <div className="container mx-auto px-4 relative z-10 mt-12">
+    <>
+      <style jsx global>{`
+        @keyframes perspective {
+          0% { perspective: 100px; }
+          50% { perspective: 500px; }
+          100% { perspective: 100px; }
+        }
+        .container-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          transform-style: preserve-3d;
+          overflow: hidden;
+          transform: translateX(0%);
+          animation: perspective 10s ease-in-out infinite;
+          z-index: -1;
+          pointer-events: none;
+        }
+        .container-loader,
+        .loader {
+          height: 100%;
+          width: 100%;
+        }
+        .loader {
+          --color-light: rgba(99, 102, 241, 0.4);
+          --color-dark: rgba(99, 102, 241, 0.2);
+          --color: ${theme === 'dark' ? 'var(--color-dark)' : 'var(--color-light)'};
+          --bg-light: rgba(255, 255, 255, 0.9);
+          --bg-dark: rgba(15, 23, 42, 0.9);
+          position: absolute;
+          background-color: ${theme === 'dark' ? 'var(--bg-dark)' : 'var(--bg-light)'};
+          background-image: 
+            repeating-linear-gradient(transparent 0 40px, var(--color) 41px 42px),
+            repeating-linear-gradient(90deg, transparent 0 40px, var(--color) 41px 42px);
+          transform: rotateX(60deg) rotateZ(45deg) scale(1.2);
+          top: 0;
+          left: 0;
+          opacity: ${theme === 'dark' ? '0.9' : '0.7'};
+          width: 200%;
+          height: 200%;
+          background-size: 80px 80px;
+        }
+        @media (max-width: 768px) {
+          .loader {
+            background-size: 60px 60px;
+          }
+        }
+      `}</style>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* 3D Grid Loader Background */}
+        <div className="fixed inset-0 z-0">
+          <div className="container-loader">
+            <div className="loader"></div>
+          </div>
+          <div className={`absolute inset-0 ${
+            theme === 'dark' 
+              ? 'bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-indigo-950/95' 
+              : 'bg-gradient-to-br from-slate-50/95 via-blue-50/95 to-indigo-100/95'
+          }`}></div>
+        </div>
+      <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
         <div className="flex flex-col">
           {playlists.length > 0 && (
             <div className="flex flex-col">
@@ -421,8 +476,9 @@ const Library = () => {
           onAdd={addPlaylist}
         />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
-export default Library; 
+export default Library;

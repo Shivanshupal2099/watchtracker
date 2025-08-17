@@ -193,6 +193,234 @@ const formatTime = (seconds: number) => {
 
 // Add these styles at the top of the file, after the imports
 const styles = `
+/* Feature Buttons */
+.feature-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 24px;
+  height: 48px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+  border-radius: 50px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 
+              0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.feature-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #ffd700, #ffb700);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.feature-button:hover:before {
+  opacity: 1;
+}
+
+.feature-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 100ms ease;
+}
+
+.feature-button svg {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.play {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 200ms;
+  position: relative;
+  z-index: 2;
+}
+
+.feature-button:hover svg {
+  transform: scale(1.5) translateX(10px);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.now {
+  position: absolute;
+  left: 0;
+  transform: translateX(-100%);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 24px;
+}
+
+.feature-button:hover .now {
+  transform: translateX(12px);
+  transition-delay: 200ms;
+  color: #1a1a1a;
+}
+
+.feature-button:hover .play {
+  transform: translateX(180%);
+  transition-delay: 200ms;
+  color: #1a1a1a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .feature-button {
+    padding: 0 20px;
+    height: 44px;
+    font-size: 13px;
+  }
+  
+  .feature-button .now {
+    padding: 0 20px;
+  }
+}
+
+/* Cube Button Styles */
+.btn {
+  display: block;
+  padding: 0.7em 1em;
+  background: transparent;
+  outline: none;
+  border: 0;
+  color: gb(255, 209, 57);
+  letter-spacing: 0.1em;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1;
+  margin: 0;
+  line-height: 1;
+  height: auto;
+  min-width: 120px;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cube {
+  position: relative;
+  transition: all 0.5s;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+}
+
+.cube .bg-top {
+  position: absolute;
+  height: 10px;
+  background: gb(255, 209, 57);
+  bottom: 100%;
+  left: 5px;
+  right: -5px;
+  transform: skew(-45deg, 0);
+  margin: 0;
+  transition: all 0.4s;
+}
+
+.cube .bg-top .bg-inner {
+  bottom: 0;
+}
+
+.cube .bg {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  right: 0;
+  background: rgb(255, 209, 57);
+  transition: all 0.4s;
+}
+
+.cube .bg-right {
+  position: absolute;
+  background:gb(255, 209, 57);
+  top: -5px;
+  z-index: 0;
+  bottom: 5px;
+  width: 10px;
+  left: 100%;
+  transform: skew(0, -45deg);
+  transition: all 0.4s;
+}
+
+.cube .bg-right .bg-inner {
+  left: 0;
+}
+
+.cube .bg-inner {
+  background: #28282d;
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+}
+
+.cube .text {
+  position: relative;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 16px;
+  color: gb(255, 209, 57);
+}
+
+.cube:hover .bg-inner {
+  background: gb(255, 209, 57);
+  transition: all 0.4s;
+}
+
+.cube:hover .text {
+  color: #28282d;
+  transition: all 0.4s;
+}
+
+.cube:hover .bg-right,
+.cube:hover .bg,
+.cube:hover .bg-top {
+  background: #28282d;
+}
+
+.cube:active {
+  z-index: 9999;
+  animation: bounce 0.1s linear;
+}
+
+@keyframes bounce {
+  50% {
+    transform: scale(0.9);
+  }
+}
+
 @keyframes slide-in-right {
   from {
     opacity: 0;
@@ -2573,9 +2801,6 @@ const VideoPlayer = () => {
     }));
   };
 
-  useEffect(() => {
-    setShowAskAI(true);
-  }, []);
 
   if (isLoading) {
     return (
@@ -2815,13 +3040,202 @@ const VideoPlayer = () => {
             </Button>
           )}
           <div className="flex items-center gap-2">
-            <Button
+            <button
               onClick={() => setShowAskAI(true)}
-              className={`rounded-full font-bold px-6 py-2 shadow-md border transition-all duration-200 flex items-center gap-2 ${isDarkMode ? 'bg-white text-black border-black hover:bg-black hover:text-white' : 'bg-black text-white border-black hover:bg-white hover:text-black'}`}
-              style={{ boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.10)' : '0 2px 8px rgba(59,130,246,0.10)' }}
+              className={`button relative flex items-center gap-2 z-10 group ${isDarkMode ? 'dark' : ''}`}
+              aria-label="Ask AI"
             >
-              Ask AI
-            </Button>
+              <span className="absolute inset-0 rounded-full overflow-hidden">
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></span>
+              </span>
+              <span className="dots_border"></span>
+              <span className="sparkle relative z-10">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" className="path" />
+                </svg>
+                <span className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 group-hover:scale-150 transition-all duration-300"></span>
+              </span>
+              <span className="text_button relative z-10">Ask AI</span>
+              <style jsx>{`
+                .button {
+                  --border_radius: 9999px;
+                  --transtion: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  --offset: 2px;
+                  cursor: pointer;
+                  position: relative;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.5rem;
+                  transform-origin: center;
+                  padding: 0.75rem 1.75rem;
+                  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+                  background-size: 200% auto;
+                  border: none;
+                  border-radius: var(--border_radius);
+                  transform: scale(1);
+                  transition: all var(--transtion);
+                  overflow: hidden;
+                  box-shadow: 0 4px 15px -5px rgba(99, 102, 241, 0.4);
+                }
+                
+                .button:hover {
+                  background-position: right center;
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 20px -5px rgba(99, 102, 241, 0.6);
+                }
+                
+                .button:active {
+                  transform: translateY(0) scale(0.98);
+                  box-shadow: 0 2px 10px -3px rgba(99, 102, 241, 0.4);
+                }
+                
+                /* Light mode styles */
+                .button::before {
+                  content: "";
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+                  background-size: 200% auto;
+                  border-radius: var(--border_radius);
+                  z-index: 0;
+                  transition: all var(--transtion);
+                }
+
+                /* Dark mode styles */
+                .button.dark::before {
+                  background: linear-gradient(135deg, #4338ca 0%, #6d28d9 50%, #db2777 100%);
+                  background-size: 200% auto;
+                }
+
+                .button:focus-visible {
+                  outline: 2px solid white;
+                  outline-offset: 2px;
+                }
+
+                .dots_border {
+                  --size_border: calc(100% + 2px);
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  width: var(--size_border);
+                  height: var(--size_border);
+                  border-radius: var(--border_radius);
+                  background: conic-gradient(
+                    from 0deg at 50% 50%,
+                    transparent 0%,
+                    #6366f1 10%,
+                    transparent 20%
+                  );
+                  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                  mask-composite: exclude;
+                  padding: 2px;
+                  z-index: 2;
+                  opacity: 0;
+                  transition: opacity 0.3s ease;
+                }
+
+                .button:hover .dots_border {
+                  opacity: 1;
+                  animation: rotate 1.5s linear infinite;
+                }
+
+                .button.dark .dots_border {
+                  background: conic-gradient(
+                    from 0deg at 50% 50%,
+                    transparent 0%,
+                    #c084fc 10%,
+                    transparent 20%
+                  );
+                }
+
+                @keyframes rotate {
+                  from { transform: translate(-50%, -50%) rotate(0deg); }
+                  to { transform: translate(-50%, -50%) rotate(360deg); }
+                }
+
+                .sparkle {
+                  position: relative;
+                  z-index: 3;
+                  width: 1.25rem;
+                  height: 1.25rem;
+                  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                  transform-origin: center;
+                }
+
+                .button:hover .sparkle {
+                  transform: scale(1.1);
+                }
+
+                .sparkle .path {
+                  fill: #ffffff;
+                  transition: all 0.3s ease;
+                }
+
+                .button.dark .sparkle .path {
+                  fill: #f8fafc;
+                }
+
+                .button:hover .sparkle {
+                  animation: bounce 0.6s ease-in-out;
+                }
+                
+                @keyframes bounce {
+                  0%, 100% { transform: translateY(0) rotate(0deg); }
+                  25% { transform: translateY(-3px) rotate(-5deg); }
+                  50% { transform: translateY(0) rotate(5deg); }
+                  75% { transform: translateY(-1px) rotate(-2deg); }
+                }
+                
+                .button:is(:hover, :focus) .sparkle .path {
+                  animation: sparkle 1.5s ease-in-out infinite;
+                }
+
+                @keyframes sparkle {
+                  0%, 100% { opacity: 1; transform: scale(1); }
+                  50% { opacity: 0.8; transform: scale(1.2); }
+                }
+
+                .text_button {
+                  position: relative;
+                  z-index: 3;
+                  font-size: 0.95rem;
+                  font-weight: 600;
+                  letter-spacing: 0.02em;
+                  color: white;
+                  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .button:hover .text_button {
+                  letter-spacing: 0.03em;
+                }
+                
+                /* Add a subtle shine effect to text on hover */
+                .text_button::after {
+                  content: '';
+                  position: absolute;
+                  top: -50%;
+                  left: -60%;
+                  width: 20%;
+                  height: 200%;
+                  background: rgba(255, 255, 255, 0.2);
+                  transform: rotate(30deg);
+                  transition: all 0.6s ease;
+                  opacity: 0;
+                }
+                
+                .button:hover .text_button::after {
+                  left: 120%;
+                  opacity: 1;
+                }
+              `}</style>
+            </button>
             <Button
               onClick={() => setIsDarkMode((prev) => !prev)}
               className="rounded-full font-bold px-4 py-2 shadow-md border border-blue-600 transition-all duration-200 bg-white text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2"
@@ -3051,14 +3465,27 @@ const VideoPlayer = () => {
                       {/* Main Controls */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Button
+                          <button
                             onClick={markAsComplete}
-                            className={`relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 bg-white text-black border-2 border-black rounded-full font-bold px-6 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2`}
                             disabled={currentVideo.progress >= 100}
+                            className={`btn relative inline-flex items-center justify-center px-6 py-2 font-mono text-sm font-bold tracking-wider ${currentVideo.progress >= 100 ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
-                            <CheckCircle className="w-4 h-4 mr-2 text-black" />
-                            {currentVideo.progress >= 100 ? 'Completed' : 'Complete'}
-                          </Button>
+                            <span className="cube">
+                              <span className="bg-top">
+                                <span className="bg-inner"></span>
+                              </span>
+                              <span className="bg">
+                                <span className="bg-inner"></span>
+                              </span>
+                              <span className="bg-right">
+                                <span className="bg-inner"></span>
+                              </span>
+                              <span className="text flex items-center">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                {currentVideo.progress >= 100 ? 'Completed' : 'Complete'}
+                              </span>
+                            </span>
+                          </button>
                           <div className="h-6 w-px bg-gradient-to-b from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700" />
                           
                         </div>
@@ -3174,33 +3601,47 @@ const VideoPlayer = () => {
                   </div>
 
                   {/* Features Section */}
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {/* Feature Toggles */}
-                    <div className="flex items-center justify-center gap-4">
-                      <Button
-                        onClick={() => setShowFloatingChat(!showFloatingChat)}
-                        className={`rounded-full font-bold px-6 py-2 shadow-md border border-black transition-all duration-200 flex items-center gap-2 bg-black text-white hover:bg-white hover:text-black hover:border-black`}
-                        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
-                      >
-                        <MessageSquare className="w-5 h-5 mr-2 transition-all duration-200 group-hover:text-black" />
-                        Chat Room
-                      </Button>
-                      <Button
-                        onClick={() => setShowFloatingNotes(!showFloatingNotes)}
-                        className={`rounded-full font-bold px-6 py-2 shadow-md border border-black transition-all duration-200 flex items-center gap-2 bg-black text-white hover:bg-white hover:text-black hover:border-black`}
-                        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
-                      >
-                        <StickyNote className="w-5 h-5 mr-2 transition-all duration-200 group-hover:text-black" />
-                        Notes
-                      </Button>
-                      <Button
-                        onClick={() => setShowPomodoro(!showPomodoro)}
-                        className="rounded-full font-bold px-6 py-2 shadow-md border border-black transition-all duration-200 flex items-center gap-2 bg-black text-white hover:bg-white hover:text-black hover:border-black"
-                        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
-                      >
-                        <Timer className="w-5 h-5 mr-2 transition-all duration-200 group-hover:text-black" />
-                        Pomodoro
-                      </Button>
+                    <div className="flex flex-wrap items-center justify-center gap-6 px-4">
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                        <button
+                          onClick={() => setShowFloatingChat(!showFloatingChat)}
+                          className="feature-button relative"
+                        >
+                          <span className="now">
+                            <MessageSquare className="w-5 h-5" />
+                          </span>
+                          <span className="play">Chat Room</span>
+                        </button>
+                      </div>
+                      
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                        <button
+                          onClick={() => setShowFloatingNotes(!showFloatingNotes)}
+                          className="feature-button relative"
+                        >
+                          <span className="now">
+                            <StickyNote className="w-5 h-5" />
+                          </span>
+                          <span className="play">Notes</span>
+                        </button>
+                      </div>
+                      
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                        <button
+                          onClick={() => setShowPomodoro(!showPomodoro)}
+                          className="feature-button relative"
+                        >
+                          <span className="now">
+                            <Timer className="w-5 h-5" />
+                          </span>
+                          <span className="play">Pomodoro</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3661,8 +4102,8 @@ const VideoPlayer = () => {
             height: isNotesMaximized ? '90vh' : 500,
             maxHeight: '98vh',
             background: 'white',
-            borderRadius: 24,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
             zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
@@ -3673,7 +4114,7 @@ const VideoPlayer = () => {
           }}
         >
           <div
-            className="flex items-center justify-between px-4 py-3 bg-black text-white rounded-t-2xl cursor-move select-none"
+            className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg cursor-move select-none"
             onMouseDown={e => {
               setNotesDragging(true);
               const rect = notesRef.current?.getBoundingClientRect();
@@ -3683,30 +4124,33 @@ const VideoPlayer = () => {
               });
             }}
           >
-            <span className="font-bold text-lg">Notes</span>
+            <div className="flex items-center gap-2">
+              <StickyNote className="w-5 h-5" />
+              <span className="font-bold text-lg">My Notes</span>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsNotesMaximized(m => !m)}
-                className="text-white hover:text-blue-300 text-xl font-bold focus:outline-none"
+                className="text-white/80 hover:text-white text-xl font-bold focus:outline-none transition-colors"
                 title={isNotesMaximized ? 'Restore' : 'Maximize'}
               >
-                {isNotesMaximized ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                {isNotesMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => setShowFloatingNotes(false)}
-                className="text-white hover:text-red-400 text-xl font-bold focus:outline-none"
+                className="text-white/80 hover:text-red-200 text-xl font-bold focus:outline-none transition-colors"
                 title="Close Notes"
               >
-                ×
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-2 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
             {notes.filter(n => n.videoId === currentVideo?.id).length === 0 ? (
               <div className="text-gray-400 text-center mt-16">No notes yet. Add your first note!</div>
             ) : (
               notes.filter(n => n.videoId === currentVideo?.id).map(note => (
-                <div key={note.id} className="mb-4 p-3 bg-white rounded-lg shadow border border-gray-200 flex justify-between items-start">
+                <div key={note.id} className="mb-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow transition-all duration-200">
                   <div>
                     {editingNoteId === note.id ? (
                       <>
