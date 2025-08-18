@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import AIService from '@/services/aiService';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, SkipBack, SkipForward, CheckCircle, Clock, Play, List, PlayCircle, RotateCcw, Timer, ChevronLeft, Send, Mic, Smile, Search, ThumbsUp, Heart, Star, Flag, MoreVertical, Pin, Trash2, MessageSquare, StickyNote, Save, Edit2, X, Image, Download, FileText, Tag, Volume2, Sun, Moon, Maximize2, Minimize2, Code, Video as VideoIcon, Snowflake, MicOff, Eye, Phone, PhoneOff, User, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -193,6 +194,560 @@ const formatTime = (seconds: number) => {
 
 // Add these styles at the top of the file, after the imports
 const styles = `
+/* AI Chat Dialog */
+.ai-chat-dialog {
+  max-height: 70vh !important;
+  height: 600px !important;
+  --primary-color: #6366f1;
+  --primary-hover: #4f46e5;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --transition: all 0.2s ease-in-out;
+}
+
+/* Dark mode variables */
+.dark .ai-chat-dialog {
+  --primary-color: #818cf8;
+  --primary-hover: #6366f1;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --border-color: #374151;
+}
+
+/* Chat Container */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+}
+
+/* Chat Header */
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  position: relative;
+}
+
+.status-indicator::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.4);
+  animation: pulse 2s infinite;
+}
+
+.status-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  transition: var(--transition);
+}
+
+.badge-gpt {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.badge-pro {
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+/* Input Section */
+.input-section {
+  position: relative;
+  padding: 0.75rem 1rem 1rem;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: 10;
+}
+
+.main-input {
+  width: 100%;
+  min-height: 60px;
+  max-height: 120px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  resize: none;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.main-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.main-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Controls Section */
+.controls-section {
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: 10;
+  border-top: 1px solid var(--border-color);
+}
+
+.controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+}
+
+.control-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+}
+
+.control-btn .btn-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: #1f2937;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+}
+
+.control-btn:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* Chat Messages Container */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.dark .chat-messages {
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+}
+
+/* Message Bubbles */
+.message-bubble {
+  max-width: 85%;
+  padding: 0.875rem 1.125rem;
+  border-radius: 1.125rem;
+  line-height: 1.4;
+  position: relative;
+  animation: messageAppear 0.25s ease-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  word-wrap: break-word;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-bubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* User Message */
+.message-user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+  margin-left: auto;
+  border-top-right-radius: 0.25rem;
+}
+
+/* AI Message */
+.message-ai {
+  align-self: flex-start;
+  background: white;
+  color: #1f2937;
+  border-bottom-left-radius: 0.25rem;
+  border: 1px solid #e5e7eb;
+  border-top-left-radius: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .message-ai {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+/* Message Timestamp */
+.message-timestamp {
+  display: block;
+  font-size: 0.6875rem;
+  opacity: 0.8;
+  margin-top: 0.375rem;
+  font-weight: 500;
+}
+
+.message-user .message-timestamp {
+  text-align: right;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.message-ai .message-timestamp {
+  color: #6b7280;
+}
+
+.dark .message-ai .message-timestamp {
+  color: #9ca3af;
+}
+
+/* Input Area */
+.input-section {
+  position: relative;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.dark .input-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+/* Main Input */
+.main-input {
+  width: 100%;
+  min-height: 60px;
+  max-height: 200px;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: #f9fafb;
+  color: #1f2937;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .main-input {
+  background: #111827;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.main-input:focus {
+  outline: none;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Send Button */
+.send-button {
+  position: absolute;
+  right: 1.75rem;
+  bottom: 1.75rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
+}
+
+.send-button:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.25);
+}
+
+.send-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animations */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.dark .chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(75, 85, 99, 0.7);
+}
+  flex-direction: column;
+  gap: 0.75rem;
+  scroll-behavior: smooth;
+  max-height: calc(100% - 180px);
+}
+
+.message {
+  max-width: 90%;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.875rem;
+  line-height: 1.35;
+  position: relative;
+  animation: messageAppear 0.2s ease-out;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-user {
+  align-self: flex-end;
+  background: var(--primary-color);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+  margin-left: auto;
+}
+
+.message-ai {
+  align-self: flex-start;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom-left-radius: 0.25rem;
+  border: 1px solid var(--border-color);
+}
+
+.message-timestamp {
+  display: block;
+  font-size: 0.6875rem;
+  opacity: 0.8;
+  margin-top: 0.375rem;
+}
+
+.message-user .message-timestamp {
+  text-align: right;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-ai .message-timestamp {
+  color: var(--text-secondary);
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: 1.125rem;
+  width: fit-content;
+  align-self: flex-start;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: typingAnimation 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingAnimation {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+/* Voice Input Button */
+.voice-btn {
+  position: relative;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.voice-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.voice-btn.listening {
+  animation: pulse 1.5s infinite;
+  color: #ef4444;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
 /* Feature Buttons */
 .feature-button {
   display: flex;
@@ -716,6 +1271,11 @@ const VideoPlayer = () => {
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [floatingNotes, setFloatingNotes] = useState<Note[]>([]);
+  
+  // AI Chat State
+  const [aiQuestion, setAIQuestion] = useState('');
+  const [aiLoading, setAILoading] = useState(false);
+  const [aiResponses, setAIResponses] = useState<{question: string; answer: string}[]>([]);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [currentFlashcard, setCurrentFlashcard] = useState<Flashcard | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -1012,37 +1572,50 @@ const VideoPlayer = () => {
   }, [id, location.state, navigate, isInitialized]);
 
   // Add a new effect to sync with completed videos
-  useEffect(() => {
+  const syncCompletedVideos = useCallback(() => {
     if (!playlist) return;
+    
+    const completedVideos = JSON.parse(localStorage.getItem('completedVideos') || '[]') as CompletedVideo[];
+    const completedVideoIds = new Set(completedVideos.map(v => v.id));
+    
+    // Only update videos that are marked as completed in localStorage but not in the current playlist
+    const updatedVideos = playlist.videos.map(video => {
+      // If video is in completedVideos but progress is not 100, update progress
+      if (completedVideoIds.has(video.id) && video.progress < 100) {
+        return { ...video, progress: 100 };
+      }
+      // If video is not in completedVideos but progress is 100, reset progress
+      if (!completedVideoIds.has(video.id) && video.progress >= 100) {
+        return { ...video, progress: 0 };
+      }
+      return video;
+    });
 
-    const syncCompletedVideos = () => {
-      const completedVideos = JSON.parse(localStorage.getItem('completedVideos') || '[]') as CompletedVideo[];
-      const updatedVideos = playlist.videos.map(video => {
-        const completedVideo = completedVideos.find(cv => cv.id === video.id);
-        if (completedVideo) {
-          return { ...video, progress: 100 };
-        }
-        return video;
-      });
-
-      // Only update if there are changes
-      if (JSON.stringify(updatedVideos) !== JSON.stringify(playlist.videos)) {
-        const updatedPlaylist = { ...playlist, videos: updatedVideos };
-        setPlaylist(updatedPlaylist);
-        
-        // Update localStorage
-        const savedPlaylists = localStorage.getItem('youtubePlaylists');
-        if (savedPlaylists) {
-          const playlists: Playlist[] = JSON.parse(savedPlaylists);
-          const index = playlists.findIndex(p => p.id === id);
+    // Only update if there are changes
+    const hasChanges = JSON.stringify(updatedVideos) !== JSON.stringify(playlist.videos);
+    if (hasChanges) {
+      const updatedPlaylist = { ...playlist, videos: updatedVideos };
+      setPlaylist(updatedPlaylist);
+      
+      // Update localStorage with the new playlist
+      const savedPlaylists = localStorage.getItem('youtubePlaylists');
+      if (savedPlaylists) {
+        try {
+          const playlists = JSON.parse(savedPlaylists);
+          const index = playlists.findIndex((p: Playlist) => p.id === id);
           if (index !== -1) {
             playlists[index] = updatedPlaylist;
             localStorage.setItem('youtubePlaylists', JSON.stringify(playlists));
           }
+        } catch (error) {
+          console.error('Error updating playlists in localStorage:', error);
         }
       }
-    };
+    }
+  }, [playlist, id]);
 
+  // Add effect to sync completed videos
+  useEffect(() => {
     // Initial sync
     syncCompletedVideos();
 
@@ -1057,7 +1630,7 @@ const VideoPlayer = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [playlist, id]);
+  }, [syncCompletedVideos]);
 
   // Add this effect to handle localStorage sync and auto-refresh
   useEffect(() => {
@@ -1215,7 +1788,7 @@ const VideoPlayer = () => {
         cumulativeTime: 0
       });
       setPlaylist(updatedPlaylist);
-        setShowCompletionDialog(true);
+      setShowCompletionDialog(true);
       // Wait 5 seconds, then close modal and go to next video if any
       setTimeout(() => {
         setShowCompletionDialog(false);
@@ -1233,6 +1806,65 @@ const VideoPlayer = () => {
       }));
       toast.success('Video marked as complete!');
     }
+  };
+
+  const resetVideo = (videoId: string) => {
+    if (!playlist) return;
+
+    // Update the playlist to mark the video as not completed
+    const updatedVideos = playlist.videos.map(video => 
+      video.id === videoId ? { ...video, progress: 0 } : video
+    );
+
+    const updatedPlaylist = { ...playlist, videos: updatedVideos };
+
+    // Update localStorage for playlists
+    const savedPlaylists = localStorage.getItem('youtubePlaylists');
+    if (savedPlaylists) {
+      try {
+        const playlists = JSON.parse(savedPlaylists);
+        const index = playlists.findIndex(p => p.id === id);
+        if (index !== -1) {
+          playlists[index] = updatedPlaylist;
+          localStorage.setItem('youtubePlaylists', JSON.stringify(playlists));
+        }
+      } catch (error) {
+        console.error('Error updating localStorage:', error);
+      }
+    }
+
+    // Remove from completedVideos in localStorage
+    const completedVideos = JSON.parse(localStorage.getItem('completedVideos') || '[]');
+    const updatedCompletedVideos = completedVideos.filter((v: any) => v.id !== videoId);
+    localStorage.setItem('completedVideos', JSON.stringify(updatedCompletedVideos));
+
+    // Reset watch time data for the video
+    localStorage.removeItem(`watchTime_${videoId}`);
+
+    // Update state
+    setPlaylist(updatedPlaylist);
+    
+    // If the current video is the one being reset, update its progress
+    if (currentVideo?.id === videoId) {
+      setWatchTimeData({
+        totalWatchTime: 0,
+        lastPosition: 0,
+        lastUpdate: Date.now(),
+        playCount: 0,
+        stopCount: 0,
+        cumulativeTime: 0
+      });
+    }
+
+    // Dispatch playlist update event
+    window.dispatchEvent(new CustomEvent('playlistUpdated', {
+      detail: {
+        playlistId: id,
+        updatedPlaylist
+      }
+    }));
+
+    toast.success('Video reset successfully!');
   };
 
   const resetAllData = () => {
@@ -2607,9 +3239,6 @@ const VideoPlayer = () => {
   const [askAIPos, setAskAIPos] = useState<{ x: number; y: number }>({ x: window.innerWidth - 900, y: window.innerHeight - 600 });
   const [askAIDragging, setAskAIDragging] = useState(false);
   const [askAIDragOffset, setAskAIDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [aiQuestion, setAIQuestion] = useState('');
-  const [aiAnswer, setAIAnswer] = useState('');
-  const [aiLoading, setAILoading] = useState(false);
   const askAIRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2631,40 +3260,48 @@ const VideoPlayer = () => {
     };
   }, [askAIDragging, askAIDragOffset]);
 
-  // Fix Gemini API answer extraction
+  // Handle asking AI using the aiService
   async function handleAskAI() {
     if (!aiQuestion.trim()) return;
+    
+    const question = aiQuestion.trim();
     setAILoading(true);
-    setAIAnswer('');
+    
     try {
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyBwZB2vM8bFAY8sQ6nok5YoRlz2_zalQwo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: aiQuestion }] }]
-        })
+      // Add user's question to the chat
+      setAIResponses(prev => [...prev, { question, answer: '' }]);
+      setAIQuestion('');
+      
+      // Call the AI service
+      const response = await AIService.askQuestion(question);
+      
+      // Update the last response with the AI's answer
+      setAIResponses(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (lastIndex >= 0) {
+          updated[lastIndex] = { ...updated[lastIndex], answer: response };
+        }
+        return updated;
       });
-      const data = await res.json();
-      // Try to extract the answer from multiple possible locations
-      let answer = '';
-      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        answer = data.candidates[0].content.parts[0].text;
-      } else if (data?.candidates?.[0]?.content?.text) {
-        answer = data.candidates[0].content.text;
-      } else if (data?.candidates?.[0]?.output) {
-        answer = data.candidates[0].output;
-      } else if (data?.candidates?.[0]?.content) {
-        answer = typeof data.candidates[0].content === 'string' ? data.candidates[0].content : JSON.stringify(data.candidates[0].content);
-      } else if (data?.candidates?.[0]) {
-        answer = JSON.stringify(data.candidates[0]);
-      } else {
-        answer = 'No answer received.';
-      }
-      setAIAnswer(answer);
-    } catch (e) {
-      setAIAnswer('Error contacting AI.');
+      
+      // Scroll to bottom after new message is added
+      setTimeout(() => {
+        const messagesContainer = document.querySelector('.chat-messages');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      setAIResponses(prev => [...prev, { 
+        question, 
+        answer: 'Sorry, there was an error processing your request. Please try again.' 
+      }]);
+    } finally {
+      setAILoading(false);
     }
-    setAILoading(false);
   }
 
   // Move this to the top of the VideoPlayer component, after other useRef/useState
@@ -2672,6 +3309,20 @@ const VideoPlayer = () => {
 
   // Add a ref to track if the video was paused by the break
   const wasPausedByBreak = useRef(false);
+  
+  // Create a ref for the messages container
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [aiResponses]);
 
   // Place this after all useState/useRef and before any return
   useEffect(() => {
@@ -2872,6 +3523,57 @@ const VideoPlayer = () => {
     setPomodoroTime(isWork ? workDuration * 60 : breakDuration * 60);
     setBreaksTaken(0);
     setSessionsCompleted(0);
+  };
+
+  const handleVoiceInput = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    
+    // Check if browser supports speech recognition
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Your browser does not support speech recognition. Please try Chrome or Edge.');
+      return;
+    }
+
+    // Create speech recognition instance
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    // Configure recognition
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    // Start recognition
+    recognition.start();
+    
+    // Disable the button while listening
+    const voiceBtn = event.currentTarget;
+    voiceBtn.disabled = true;
+    voiceBtn.classList.add('listening');
+
+    // Handle results
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      
+      setAIQuestion(prev => prev + ' ' + transcript);
+    };
+
+    // Handle errors
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+      if (event.error === 'not-allowed') {
+        alert('Please allow microphone access to use voice input.');
+      }
+    };
+
+    // Re-enable button when done
+    recognition.onend = () => {
+      voiceBtn.disabled = false;
+      voiceBtn.classList.remove('listening');
+    };
   };
 
   return (
@@ -3236,14 +3938,6 @@ const VideoPlayer = () => {
                 }
               `}</style>
             </button>
-            <Button
-              onClick={() => setIsDarkMode((prev) => !prev)}
-              className="rounded-full font-bold px-4 py-2 shadow-md border border-blue-600 transition-all duration-200 bg-white text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2"
-              style={{ boxShadow: '0 2px 8px rgba(59,130,246,0.10)' }}
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
           </div>
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
@@ -4454,16 +5148,129 @@ const VideoPlayer = () => {
       {/* Floating Ask AI Window */}
       <Dialog open={showAskAI} onOpenChange={setShowAskAI}>
         <DialogContent
-          className={`max-w-lg w-full p-8 rounded-2xl shadow-2xl border transition-all duration-200
-            ${isDarkMode ? 'bg-black text-white border-white' : 'bg-white text-black border-black'}
-          `}
+          className={`ai-chat-dialog max-w-2xl w-full p-0 rounded-2xl overflow-hidden transition-all duration-200 ${
+            isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+          }`}
           style={{
-            boxShadow: isDarkMode
-              ? '0 8px 40px 0 rgba(0,0,0,0.25)'
-              : '0 8px 40px 0 rgba(0,0,0,0.10)'
-          }}
-        >
-          {/* ...Ask AI content... */}
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: 'none',
+            minHeight: '600px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+          <div className="ai-chat-dialog w-full h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+            <div className="flex flex-col h-full">
+              {/* Input Section */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div className="relative">
+                  <textarea
+                    rows={2}
+                    className="w-full px-4 py-3 pr-16 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-colors duration-200 resize-none"
+                    placeholder="Ask me anything about this video..."
+                    value={aiQuestion}
+                    onChange={(e) => setAIQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAskAI();
+                      }
+                    }}
+                    disabled={aiLoading}
+                  />
+                  <button
+                    className="absolute right-3 bottom-3 p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                    onClick={handleAskAI}
+                    disabled={!aiQuestion.trim() || aiLoading}
+                  >
+                    {aiLoading ? (
+                      <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages Section */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
+                <style jsx>{`
+                  .ai-chat-dialog {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                  }
+                  .chat-messages {
+                    scrollbar-width: thin;
+                    scrollbar-color: #9ca3af #f3f4f6;
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 0;
+                    height: 100%;
+                    overflow-y: auto;
+                    scroll-behavior: smooth;
+                  }
+                  .chat-messages::-webkit-scrollbar {
+                    width: 6px;
+                  }
+                  .chat-messages::-webkit-scrollbar-track {
+                    background: #f3f4f6;
+                    border-radius: 3px;
+                  }
+                  .chat-messages::-webkit-scrollbar-thumb {
+                    background-color: #9ca3af;
+                    border-radius: 3px;
+                  }
+                  .dark .chat-messages::-webkit-scrollbar-track {
+                    background: #374151;
+                  }
+                  .dark .chat-messages::-webkit-scrollbar-thumb {
+                    background-color: #4b5563;
+                  }
+                `}</style>
+                
+                <div className="space-y-4">
+                  {aiResponses.length === 0 ? (
+                    <div className="text-center text-gray-500 mt-8">
+                      <p>Ask me anything about this video or topic!</p>
+                    </div>
+                  ) : (
+                    aiResponses.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex justify-end">
+                          <div className="bg-blue-600 text-white rounded-lg p-3 max-w-[80%] shadow-sm">
+                            {item.question}
+                          </div>
+                        </div>
+                        <div className="flex justify-start">
+                          <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg p-3 max-w-[80%] shadow-sm">
+                            {item.answer || '...'}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {aiLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
       {/* Note Preview Modal */}
