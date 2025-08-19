@@ -33,8 +33,22 @@ interface YouTubePlayer {
   getDuration: () => number;
   getVideoData: () => { title: string };
   setVolume: (volume: number) => void;
+  getVolume: () => number;
   setPlaybackRate: (rate: number) => void;
-  getPlaybackQuality?: () => string;
+  getPlaybackRate: () => number;
+  getAvailableQualityLevels: () => string[];
+  getPlaybackQuality: () => string;
+  setPlaybackQuality: (suggestedQuality: string) => void;
+  getAvailablePlaybackRates: () => number[];
+  isMuted: () => boolean;
+  mute: () => void;
+  unMute: () => void;
+  playVideoAt: (index: number) => void;
+  getPlaylist: () => string[] | null;
+  getPlaylistIndex: () => number;
+  getIframe: () => HTMLIFrameElement | null;
+  getOptions: () => any;
+  getOption: (module: string, option: string) => any;
 }
 
 interface YouTubePlayerEvent {
@@ -3077,16 +3091,47 @@ const VideoPlayer = () => {
 
   const [isPlayerHovered, setIsPlayerHovered] = useState(false);
 
-  // Add state for selected quality
+  // Add state for selected quality and available qualities
   const [selectedQuality, setSelectedQuality] = useState('auto');
+  const [availableQualities, setAvailableQualities] = useState<string[]>(['auto']);
+  const [isQualityLoading, setQualityLoading] = useState(false);
 
-  // In the player initialization effect, after player is ready, set selectedQuality to current quality
+  // Get available qualities and set current quality when player is ready
   useEffect(() => {
     if (!isPlayerReady || !playerRef.current) return;
-    try {
-      const currentQuality = playerRef.current.getPlaybackQuality?.() || 'auto';
-      setSelectedQuality(currentQuality);
-    } catch (e) { /* ignore */ }
+    
+    const updateQuality = () => {
+      try {
+        // Get current quality
+        const quality = playerRef.current?.getPlaybackQuality?.() || 'auto';
+        setSelectedQuality(quality);
+        
+        // Get available quality levels
+        // @ts-ignore - getAvailableQualityLevels is not in the type definition but exists in the API
+        const qualities = playerRef.current?.getAvailableQualityLevels?.() || [];
+        if (qualities.length > 0) {
+          setAvailableQualities(prev => {
+            const uniqueQualities = Array.from(new Set(['auto', ...qualities]));
+            return uniqueQualities;
+          });
+        }
+      } catch (e) {
+        console.error('Error getting quality levels:', e);
+      } finally {
+        setQualityLoading(false);
+      }
+    };
+
+    // Set up quality update on player ready and quality change
+    const timer = setTimeout(updateQuality, 1000);
+    
+    // Set up interval to check for quality changes
+    const qualityCheckInterval = setInterval(updateQuality, 5000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(qualityCheckInterval);
+    };
   }, [isPlayerReady]);
 
   // Add at the top with other useState imports
@@ -4183,7 +4228,7 @@ const VideoPlayer = () => {
                               className="w-12 h-12 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors"
                               title="Exit Fullscreen"
                             >
-                              <Minimize2 className="w-6 h-6" />
+                              <Minimize2 className="w-6 h-6"/>
                             </button>
                           </div>
                         </div>
@@ -4250,29 +4295,28 @@ const VideoPlayer = () => {
                           <button
                             onClick={markAsComplete}
                             disabled={currentVideo.progress >= 100}
-                            className={`relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium text-sm tracking-wide transition-all duration-200 ${
+                            className={`group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 ${
                               currentVideo.progress >= 100 
-                                ? 'bg-green-500/20 text-green-100 cursor-not-allowed' 
-                                : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-95 cursor-pointer'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 border-2 border-green-200 dark:border-green-800 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20'
                             }`}
                           >
-                            <CheckCircle className="w-5 h-5 mr-2" />
-                            {currentVideo.progress >= 100 ? 'Completed' : 'Mark as Complete'}
-                            <span className="cube">
-                              <span className="bg-top">
-                                <span className="bg-inner"></span>
-                              </span>
-                              <span className="bg">
-                                <span className="bg-inner"></span>
-                              </span>
-                              <span className="bg-right">
-                                <span className="bg-inner"></span>
-                              </span>
-                              <span className="text flex items-center">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                {currentVideo.progress >= 100 ? 'Completed' : 'Complete'}
-                              </span>
+                            <span className={`absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                              currentVideo.progress >= 100 ? 'hidden' : ''
+                            }`}></span>
+                            <span className="relative z-10 flex items-center">
+                              <CheckCircle 
+                                className={`w-5 h-5 mr-2 transition-transform duration-300 ${
+                                  currentVideo.progress >= 100 ? 'text-green-500' : 'group-hover:scale-110'
+                                }`} 
+                              />
+                              {currentVideo.progress >= 100 ? 'Completed' : 'Mark as Complete'}
                             </span>
+                            <span className={`absolute inset-0 w-full h-full rounded-xl ${
+                              currentVideo.progress >= 100 
+                                ? 'bg-gradient-to-r from-green-100/50 to-green-100/30 dark:from-green-900/20 dark:to-green-900/10' 
+                                : 'bg-gradient-to-r from-green-600/10 to-emerald-600/10 group-hover:from-green-600/20 group-hover:to-emerald-600/20'
+                            }`}></span>
                           </button>
                           <div className="h-6 w-px bg-gradient-to-b from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700" />
                           
@@ -4282,58 +4326,186 @@ const VideoPlayer = () => {
                           {/* Quality, Volume and Speed Controls - Improved Design */}
                           <div className="flex items-center gap-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-full px-6 py-3 shadow-2xl border border-blue-200 dark:border-blue-900/40 ring-1 ring-blue-100 dark:ring-blue-900/30" style={{boxShadow:'0 8px 32px 0 rgba(31,38,135,0.15)'}}> 
                             
-                            {/* Volume */}
-                            <div className="relative group">
+                            {/* Volume Control with Increment/Decrement Buttons */}
+                            <div className="relative group flex items-center">
+                              {/* Decrease Volume Button */}
                               <button
-                                className="flex items-center justify-center w-12 h-12 rounded-full bg-black text-white shadow-md hover:bg-neutral-800 focus:ring-2 focus:ring-white focus:outline-none transition-all duration-150"
-                                style={{ minWidth: 0, minHeight: 0, boxShadow: '0 2px 8px #0002', position: 'relative', overflow: 'hidden' }}
-                                tabIndex={0}
-                                title="Volume"
-                              >
-                                <Volume2 className="w-7 h-7 text-white" />
-                              </button>
-                              <input
-                                type="range"
-                                min={0}
-                                max={100}
-                                value={volume}
-                                onChange={e => {
-                                  const newVolume = Number(e.target.value);
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newVolume = Math.max(0, volume - 10);
                                   setVolume(newVolume);
                                   if (playerRef.current) {
                                     playerRef.current.setVolume(newVolume);
                                   }
                                 }}
-                                className="w-28 accent-blue-500 cursor-pointer rounded-full bg-gray-200 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all absolute left-1/2 -translate-x-1/2 bottom-14 opacity-0 group-hover:opacity-100 z-30"
-                                title="Volume"
-                                style={{ pointerEvents: 'auto' }}
-                              />
+                                className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/70 text-white hover:bg-slate-700/80 active:scale-95 transition-all duration-200 z-10"
+                                title="Decrease Volume"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </button>
+                              
+                              {/* Volume Indicator */}
+                              <div className="relative mx-1 group">
+                                <button
+                                  className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-transparent hover:border-white/20"
+                                  style={{ minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' }}
+                                  tabIndex={0}
+                                  title={`Volume: ${volume}%`}
+                                >
+                                  <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                  <Volume2 className={`w-6 h-6 text-white relative z-10 ${volume === 0 ? 'opacity-50' : ''}`} />
+                                  <span className="absolute bottom-0 left-0 right-0 h-1 bg-white/30">
+                                    <span 
+                                      className="absolute bottom-0 left-0 h-full bg-white transition-all duration-300"
+                                      style={{ width: `${volume}%` }}
+                                    ></span>
+                                  </span>
+                                </button>
+                              </div>
+                              
+                              {/* Increase Volume Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newVolume = Math.min(100, volume + 10);
+                                  setVolume(newVolume);
+                                  if (playerRef.current) {
+                                    playerRef.current.setVolume(newVolume);
+                                  }
+                                }}
+                                className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/70 text-white hover:bg-slate-700/80 active:scale-95 transition-all duration-200 z-10"
+                                title="Increase Volume"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </button>
+                              
+                              {/* Volume Level Indicator (appears on hover) */}
+                              <div className="absolute left-1/2 -translate-x-1/2 -top-12 px-3 py-1.5 bg-slate-800/90 backdrop-blur-md rounded-full text-xs font-medium text-white whitespace-nowrap shadow-lg border border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
+                                Volume: {volume}%
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-800/90 border-b border-r border-slate-700/50 transform rotate-45"></div>
+                              </div>
                             </div>
+
                             {/* Speed */}
                             <div className="relative group">
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <button
-                                    className="flex items-center justify-center w-12 h-12 rounded-full bg-black text-white shadow-md hover:bg-neutral-800 focus:ring-2 focus:ring-white focus:outline-none transition-all duration-150"
-                                    style={{ minWidth: 0, minHeight: 0, boxShadow: '0 2px 8px #0002', position: 'relative', overflow: 'hidden' }}
-                                    title="Playback Speed"
+                                    className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-transparent hover:border-white/20"
+                                    style={{ minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' }}
+                                    title={`Playback Speed: ${selectedSpeed}x`}
                                   >
-                                    <Code className="w-7 h-7 text-white" />
+                                    <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                    <span className="relative z-10 font-medium text-sm">{selectedSpeed}x</span>
+                                    <span className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20"></span>
                                   </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-32 p-2 bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col items-center z-50">
-                                  {[0.5, 1, 1.5, 2].map(speed => (
-                                    <button
-                                      key={speed}
-                                      onClick={() => {
-                                        if (playerRef.current) playerRef.current.setPlaybackRate(speed);
-                                        setSelectedSpeed(speed);
-                                      }}
-                                      className={`w-full py-2 rounded-lg text-center font-bold text-sm transition-colors duration-150 ${selectedSpeed === speed ? 'bg-black text-white' : 'text-black hover:bg-gray-100'}`}
-                                    >
-                                      {speed}x
-                                    </button>
-                                  ))}
+                                <PopoverContent className="w-40 p-3 bg-slate-800/90 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-2xl z-50">
+                                  <div className="space-y-2">
+                                    <div className="px-1 text-xs font-medium text-slate-400 mb-1">Playback Speed</div>
+                                    {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(speed => (
+                                      <button
+                                        key={speed}
+                                        onClick={() => {
+                                          if (playerRef.current) playerRef.current.setPlaybackRate(speed);
+                                          setSelectedSpeed(speed);
+                                        }}
+                                        className={`w-full py-2 px-3 rounded-lg text-center text-sm font-medium transition-all duration-150 flex items-center justify-between ${
+                                          selectedSpeed === speed 
+                                            ? 'bg-blue-600 text-white' 
+                                            : 'text-slate-300 hover:bg-slate-700/50'
+                                        }`}
+                                      >
+                                        <span>{speed}x</span>
+                                        {selectedSpeed === speed && (
+                                          <CheckCircle className="w-4 h-4 ml-2" />
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {/* Quality */}
+                            <div className="relative group">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    className={`flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-transparent hover:border-white/20 ${isQualityLoading ? 'opacity-70' : ''}`}
+                                    style={{ minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' }}
+                                    title={`Quality: ${selectedQuality}`}
+                                    disabled={isQualityLoading}
+                                  >
+                                    {isQualityLoading ? (
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                      <>
+                                        <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                        <span className="relative z-10 font-medium text-xs">
+                                          {selectedQuality === 'hd1080' ? '1080p' : 
+                                           selectedQuality === 'hd720' ? '720p' :
+                                           selectedQuality === 'large' ? '480p' :
+                                           selectedQuality === 'medium' ? '360p' :
+                                           selectedQuality === 'small' ? '240p' : 'Auto'}
+                                        </span>
+                                        <span className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20"></span>
+                                      </>
+                                    )}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-32 p-3 bg-slate-800/90 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-2xl z-50">
+                                  <div className="space-y-2">
+                                    <div className="px-1 text-xs font-medium text-slate-400 mb-1">
+                                      {isQualityLoading ? 'Loading...' : 'Quality'}
+                                    </div>
+                                    {availableQualities.length > 0 ? (
+                                      availableQualities.map(quality => (
+                                        <button
+                                          key={quality}
+                                          onClick={() => {
+                                            if (playerRef.current && playerRef.current.setPlaybackQuality) {
+                                              setQualityLoading(true);
+                                              try {
+                                                playerRef.current.setPlaybackQuality(quality);
+                                                setSelectedQuality(quality);
+                                              } catch (e) {
+                                                console.error('Error setting quality:', e);
+                                              } finally {
+                                                setTimeout(() => setQualityLoading(false), 500);
+                                              }
+                                            }
+                                          }}
+                                          disabled={isQualityLoading}
+                                          className={`w-full py-2 px-3 rounded-lg text-center text-sm font-medium transition-all duration-150 flex items-center justify-between ${
+                                            selectedQuality === quality 
+                                              ? 'bg-blue-600 text-white' 
+                                              : 'text-slate-300 hover:bg-slate-700/50'
+                                          } ${isQualityLoading ? 'opacity-50' : ''}`}
+                                        >
+                                          <span>
+                                            {quality === 'hd1080' ? '1080p' : 
+                                             quality === 'hd720' ? '720p' :
+                                             quality === 'large' ? '480p' :
+                                             quality === 'medium' ? '360p' :
+                                             quality === 'small' ? '240p' : 'Auto'}
+                                          </span>
+                                          {selectedQuality === quality && (
+                                            <CheckCircle className="w-4 h-4 ml-2" />
+                                          )}
+                                        </button>
+                                      ))
+                                    ) : (
+                                      <div className="text-center text-slate-400 text-sm py-2">
+                                        {isQualityLoading ? 'Loading...' : 'Unknown'}
+                                      </div>
+                                    )}
+                                  </div>
                                 </PopoverContent>
                               </Popover>
                             </div>
@@ -4350,22 +4522,24 @@ const VideoPlayer = () => {
                                 </span>
                               </button>
                             </div>
-                            <Button
-                variant="outline"
-                onClick={() => {
-                  setShowAllVideos(!showAllVideos);
-                  if (!showAllVideos) {
-                    setTimeout(() => {
-                      videoListsRef.current?.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  }
-                }}
-            className="bg-black text-white dark:bg-blue-700 dark:text-white rounded-full font-bold px-6 py-2 shadow-md border border-black dark:border-blue-500 transition-all duration-200 hover:bg-white hover:text-black hover:border-black dark:hover:bg-blue-800 dark:hover:text-blue-200 flex items-center gap-2"
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
-          >
-            <List className="w-5 h-5 mr-2 transition-all duration-200 group-hover:text-black" />
-            {showAllVideos ? 'Hide' : 'Show'}
-          </Button>
+                            <button
+                              onClick={() => {
+                                setShowAllVideos(!showAllVideos);
+                                if (!showAllVideos) {
+                                  setTimeout(() => {
+                                    videoListsRef.current?.scrollIntoView({ behavior: 'smooth' });
+                                  }, 100);
+                                }
+                              }}
+                              className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20"
+                            >
+                              <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                              <span className="relative z-10 flex items-center">
+                                <List className={`w-5 h-5 mr-2 transition-transform duration-300 ${showAllVideos ? 'rotate-180' : ''}`} />
+                                {showAllVideos ? 'Hide Videos' : 'Show Videos'}
+                              </span>
+                              <span className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20"></span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -5625,24 +5799,34 @@ const VideoPlayer = () => {
 
 export default VideoPlayer;
 
-// VideoTimeline component
+// VideoTimeline component with improved visibility and performance
 const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const timelineRef = useRef(null);
   const rafRef = useRef(null);
 
-  // Animation frame update
+  // Animation frame update with error boundary
   const updateTimeline = useCallback(() => {
-    if (isPlayerReady && playerRef.current && !isDragging) {
-      const newTime = playerRef.current.getCurrentTime?.() || 0;
-      const newDuration = playerRef.current.getDuration?.() || 0;
-      setDuration(d => (d !== newDuration ? newDuration : d));
-      setCurrentTime(t => (Math.abs(t - newTime) > 0.1 ? newTime : t));
+    if (!isPlayerReady || !playerRef.current || isDragging) {
+      rafRef.current = requestAnimationFrame(updateTimeline);
+      return;
     }
+    
+    try {
+      const newTime = playerRef.current.getCurrentTime() || 0;
+      const newDuration = playerRef.current.getDuration() || 0;
+      
+      setDuration(prev => prev !== newDuration ? newDuration : prev);
+      setCurrentTime(prev => Math.abs(prev - newTime) > 0.1 ? newTime : prev);
+    } catch (error) {
+      console.error('Error updating timeline:', error);
+    }
+    
     rafRef.current = requestAnimationFrame(updateTimeline);
   }, [isPlayerReady, playerRef, isDragging]);
 
@@ -5651,90 +5835,116 @@ const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
     return () => rafRef.current && cancelAnimationFrame(rafRef.current);
   }, [updateTimeline]);
 
-  // Buffering feedback (if possible)
+  // Handle timeline click to seek
+  const handleTimelineClick = (e: React.MouseEvent) => {
+    if (!timelineRef.current || !playerRef.current) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const newTime = Math.max(0, Math.min(pos * duration, duration));
+    playerRef.current.seekTo(newTime, true);
+  };
+
+  // Unified pointer event handlers for better touch/mouse support
+  const updateDragPosition = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (!timelineRef.current) return;
+    
+    const rect = timelineRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches?.[0]?.clientX ?? 0 : e.clientX;
+    const pos = Math.max(0, Math.min((clientX - rect.left) / rect.width, 1));
+    const newTime = pos * duration;
+    
+    setDragTime(newTime);
+    
+    // Update player position in real-time during drag
+    if (isDragging && playerRef.current) {
+      playerRef.current.seekTo(newTime, true);
+    }
+  }, [isDragging, duration, playerRef]);
+
+  const handlePointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    updateDragPosition(e);
+    document.body.style.userSelect = 'none';
+  }, [updateDragPosition]);
+  
+  const handlePointerUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      if (playerRef.current) {
+        playerRef.current.seekTo(dragTime, true);
+      }
+    }
+    document.body.style.userSelect = '';
+  }, [isDragging, dragTime, playerRef]);
+
+  // Buffering state management
   useEffect(() => {
     if (!playerRef.current) return;
+    
+    let mounted = true;
     const checkBuffering = () => {
+      if (!mounted) return;
       try {
-        const state = playerRef.current.getPlayerState?.();
+        const state = playerRef.current?.getPlayerState?.();
         setIsBuffering(state === window.YT?.PlayerState?.BUFFERING);
       } catch (err) {
         // Ignore errors (e.g., player not ready)
       }
     };
+    
+    // Initial check
+    checkBuffering();
+    
+    // Set up polling
     const interval = setInterval(checkBuffering, 200);
-    return () => clearInterval(interval);
+    
+    // Cleanup
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [playerRef]);
 
-  // Mouse/touch drag handlers
-  const getTimeFromEvent = useCallback((e) => {
-    const rect = timelineRef.current.getBoundingClientRect();
-    let x;
-    if (e.touches) {
-      x = e.touches[0].clientX - rect.left;
-    } else {
-      x = e.clientX - rect.left;
-    }
-    const percent = Math.max(0, Math.min(1, x / rect.width));
-    return percent * duration;
-  }, [duration]);
-
-  const handlePointerDown = useCallback((e) => {
-    setIsDragging(true);
-    const time = getTimeFromEvent(e);
-    setDragTime(time);
-    document.body.style.userSelect = 'none';
-  }, [getTimeFromEvent]);
-
-  const handlePointerMove = useCallback((e) => {
-    if (!isDragging) return;
-    const time = getTimeFromEvent(e);
-    setDragTime(time);
-  }, [isDragging, getTimeFromEvent]);
-
-  const handlePointerUp = useCallback(() => {
-    if (isDragging && playerRef.current) {
-      playerRef.current.seekTo(dragTime, true);
-      setCurrentTime(dragTime);
-    }
-    setIsDragging(false);
-    document.body.style.userSelect = '';
-  }, [isDragging, dragTime, playerRef]);
-
+  // Effect for handling global pointer events during drag
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handlePointerMove);
-      window.addEventListener('touchmove', handlePointerMove);
-      window.addEventListener('mouseup', handlePointerUp);
-      window.addEventListener('touchend', handlePointerUp);
-    } else {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
-      window.removeEventListener('touchend', handlePointerUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
-      window.removeEventListener('touchend', handlePointerUp);
+    if (!isDragging) return;
+    
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+      updateDragPosition(e as unknown as React.MouseEvent);
     };
-  }, [isDragging, handlePointerMove, handlePointerUp]);
+    
+    const handleGlobalUp = () => {
+      handlePointerUp();
+    };
+    
+    window.addEventListener('mousemove', handleGlobalMove);
+    window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+    window.addEventListener('mouseup', handleGlobalUp);
+    window.addEventListener('touchend', handleGlobalUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMove);
+      window.removeEventListener('touchmove', handleGlobalMove);
+      window.removeEventListener('mouseup', handleGlobalUp);
+      window.removeEventListener('touchend', handleGlobalUp);
+    };
+  }, [isDragging, updateDragPosition, handlePointerUp]);
 
-  // Hover time for tooltip
-  const handleMouseMove = useCallback((e) => {
-    const time = getTimeFromEvent(e);
-    // setHoverTime(time);
-  }, [getTimeFromEvent]);
-  // const handleMouseLeave = useCallback(() => setHoverTime(null), []);
-
-  // Keyboard support
+  // Keyboard support for seeking
   const handleKeyDown = useCallback((e) => {
     if (!playerRef.current) return;
-    if (e.key === 'ArrowLeft') {
-      playerRef.current.seekTo(Math.max((playerRef.current.getCurrentTime?.() || 0) - 5, 0), true);
-    } else if (e.key === 'ArrowRight') {
-      playerRef.current.seekTo(Math.min((playerRef.current.getCurrentTime?.() || 0) + 5, duration), true);
+    const currentTime = playerRef.current.getCurrentTime?.() || 0;
+    
+    switch(e.key) {
+      case 'ArrowLeft':
+        playerRef.current.seekTo(Math.max(currentTime - 5, 0), true);
+        break;
+      case 'ArrowRight':
+        playerRef.current.seekTo(Math.min(currentTime + 5, duration), true);
+        break;
+      default:
+        break;
     }
   }, [playerRef, duration]);
 
@@ -5754,31 +5964,81 @@ const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
   const progressPercent = duration ? ((isDragging ? dragTime : currentTime) / duration) * 100 : 0;
   
   return (
-    <div className="w-full">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white/80 w-12 text-right">
+    <div 
+      className="w-full px-4 py-3"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      <div 
+        ref={timelineRef}
+        className="relative w-full h-1.5 bg-gray-200/80 dark:bg-gray-700/80 rounded-full overflow-hidden cursor-pointer group transition-all duration-200 hover:h-2 touch-none"
+        onClick={handleTimelineClick}
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
+        onTouchMove={updateDragPosition}
+        onTouchEnd={handlePointerUp}
+      >
+        {/* Background with subtle gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-200/50 to-gray-300/50 dark:from-gray-700/50 dark:to-gray-800/50" />
+        
+        {/* Buffered progress with gradient */}
+        <div 
+          className="absolute top-0 left-0 h-full bg-gray-300/70 dark:bg-gray-600/70 transition-all duration-300 ease-out"
+          style={{ 
+            width: `${(currentVideo?.bufferedTime || 0) / duration * 100}%`,
+            background: 'linear-gradient(to right, #9ca3af, #6b7280)'
+          }}
+        />
+        
+        {/* Played progress with gradient and glow */}
+        <div 
+          className="absolute top-0 left-0 h-full transition-all duration-300 ease-out shadow-lg shadow-blue-500/20 dark:shadow-blue-400/10"
+          style={{ 
+            width: `${(isDragging ? dragTime : currentTime) / duration * 100}%`,
+            background: 'linear-gradient(90deg, #3b82f6, #6366f1)',
+            boxShadow: isHovering ? '0 0 8px rgba(59, 130, 246, 0.5)' : 'none'
+          }}
+        >
+          {/* Progress handle with pulse animation when active */}
+          <div 
+            className={`absolute right-0 top-1/2 w-3.5 h-3.5 -mr-1.75 -mt-1.75 bg-white dark:bg-gray-100 rounded-full transition-all duration-200 shadow-lg ${
+              isHovering || isDragging ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+            }`}
+            style={{
+              border: '2px solid #3b82f6',
+              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8)'
+            }}
+          />
+        </div>
+        
+        {/* Buffering indicator with animation */}
+        {isBuffering && (
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-60">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+          </div>
+        )}
+      </div>
+      
+      {/* Time display with improved typography */}
+      <div className="flex justify-between mt-2 text-xs font-medium">
+        <span className="text-gray-600 dark:text-gray-300 transition-colors duration-200">
           {formatTime(isDragging ? dragTime : currentTime)}
         </span>
-        <div 
-          ref={timelineRef}
-          className="relative flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group"
-          onMouseDown={handlePointerDown}
-          onTouchStart={handlePointerDown}
-        >
-          <div 
-            className="absolute left-0 top-0 h-full bg-red-500 rounded-full group-hover:bg-red-400 transition-colors"
-            style={{ width: `${progressPercent}%` }}
-          />
-          {isBuffering && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3 h-3 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-        <span className="text-xs text-white/80 w-12">
+        <span className="text-gray-500 dark:text-gray-400 transition-colors duration-200">
           {formatTime(duration)}
         </span>
       </div>
+      
+      {/* CSS for shimmer animation */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 1.5s infinite;
+        }
+      `}</style>
     </div>
   );
 };
