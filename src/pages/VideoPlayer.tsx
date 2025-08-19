@@ -1298,6 +1298,7 @@ const VideoPlayer = () => {
   const stopwatchInterval = useRef<NodeJS.Timeout | null>(null);
 
   const [volume, setVolume] = useState(100);
+  const [lastClick, setLastClick] = useState({ time: 0, x: 0 });
 
   // Extract video progress list for useMemo/useEffect dependencies
   const videoProgressList = useMemo(() => playlist?.videos.map(v => v.progress) || [], [playlist?.videos]);
@@ -2130,6 +2131,38 @@ const VideoPlayer = () => {
       }
     }
   }, [playlist?.videos.map(v => v.progress)]); // Watch for progress changes
+
+  // Handle double click on video to skip forward/backward
+  const handleVideoDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!playerRef.current) return;
+    
+    const now = Date.now();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left; // x position within the element
+    const videoWidth = rect.width;
+    
+    // Check if this is a double click (within 300ms and similar x position)
+    const isDoubleClick = (now - lastClick.time < 300) && (Math.abs(x - lastClick.x) < 20);
+    
+    if (isDoubleClick) {
+      const currentTime = playerRef.current.getCurrentTime();
+      const duration = playerRef.current.getDuration();
+      
+      // Left side: skip backward 10 seconds
+      if (x < videoWidth * 0.4) {
+        const newTime = Math.max(0, currentTime - 10);
+        playerRef.current.seekTo(newTime, true);
+      } 
+      // Right side: skip forward 10 seconds
+      else if (x > videoWidth * 0.6) {
+        const newTime = Math.min(duration, currentTime + 10);
+        playerRef.current.seekTo(newTime, true);
+      }
+    }
+    
+    // Update last click info
+    setLastClick({ time: now, x });
+  };
 
   // Add this effect to handle page changes
   useEffect(() => {
@@ -4000,8 +4033,38 @@ const VideoPlayer = () => {
                   }}
                   onContextMenu={e => e.preventDefault()}
                 >
-                  {/* Video Iframe */}
-                  <div ref={iframeRef} className="w-full h-full z-10" />
+                  {/* Video Iframe with double click handler */}
+                  <div 
+                    ref={iframeRef} 
+                    className="w-full h-full z-10 relative"
+                    onDoubleClick={handleVideoDoubleClick}
+                  >
+                    {/* Double click areas for navigation */}
+                    <div className="absolute inset-0 z-10 flex">
+                      <div 
+                        className="w-1/3 h-full cursor-pointer" 
+                        onClick={(e) => {
+                          if (playerRef.current) {
+                            const currentTime = playerRef.current.getCurrentTime();
+                            const newTime = Math.max(0, currentTime - 10);
+                            playerRef.current.seekTo(newTime, true);
+                          }
+                        }}
+                      />
+                      <div className="w-1/3 h-full" />
+                      <div 
+                        className="w-1/3 h-full cursor-pointer"
+                        onClick={(e) => {
+                          if (playerRef.current) {
+                            const currentTime = playerRef.current.getCurrentTime();
+                            const duration = playerRef.current.getDuration();
+                            const newTime = Math.min(duration, currentTime + 10);
+                            playerRef.current.seekTo(newTime, true);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                   {/* Gradient overlay for controls */}
                   <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none" />
                   {/* Central Play/Stop Button Overlay */}
@@ -4070,34 +4133,59 @@ const VideoPlayer = () => {
                   {/* Floating 10s skip buttons and timeline - skip buttons only in fullscreen, and add exit fullscreen button next to timeline in fullscreen */}
                   {playerRef.current && (
                     <>
-                      {/* Exit fullscreen button - only in fullscreen, always visible at bottom right */}
+                      {/* Fullscreen controls with timeline and navigation */}
                       {isFullscreen && (
-                        <div
-                          style={{
-                            position: 'absolute', right: 16, bottom: 16, zIndex: 40,
-                            pointerEvents: 'auto',
-                          }}
-                        >
-                          <button
-                            onClick={handleToggleFullscreen}
-                            style={{
-                              background: 'rgba(0,0,0,0.6)',
-                              borderRadius: '50%',
-                              padding: 16,
-                              border: 'none',
-                              cursor: 'pointer',
-                              width: 56,
-                              height: 56,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            }}
-                            className="hover:scale-110 transition-transform"
-                            title="Exit Fullscreen"
-                          >
-                            <Minimize2 className="w-9 h-9 text-white" />
-                          </button>
+                        <div className="absolute bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                          <div className="flex items-center gap-4">
+                            {/* Skip Backward Button */}
+                            <button
+                              onClick={() => {
+                                if (playerRef.current) {
+                                  const currentTime = playerRef.current.getCurrentTime();
+                                  const newTime = Math.max(0, currentTime - 10);
+                                  playerRef.current.seekTo(newTime, true);
+                                }
+                              }}
+                              className="w-12 h-12 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors"
+                              title="Skip back 10 seconds"
+                            >
+                              <SkipBack className="w-6 h-6" />
+                            </button>
+
+                            {/* Timeline */}
+                            <div className="flex-1">
+                              <VideoTimeline
+                                playerRef={playerRef}
+                                isPlayerReady={isPlayerReady}
+                                currentVideo={currentVideo}
+                              />
+                            </div>
+
+                            {/* Skip Forward Button */}
+                            <button
+                              onClick={() => {
+                                if (playerRef.current) {
+                                  const currentTime = playerRef.current.getCurrentTime();
+                                  const duration = playerRef.current.getDuration();
+                                  const newTime = Math.min(duration, currentTime + 10);
+                                  playerRef.current.seekTo(newTime, true);
+                                }
+                              }}
+                              className="w-12 h-12 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors"
+                              title="Skip forward 10 seconds"
+                            >
+                              <SkipForward className="w-6 h-6" />
+                            </button>
+
+                            {/* Exit Fullscreen Button */}
+                            <button
+                              onClick={handleToggleFullscreen}
+                              className="w-12 h-12 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors"
+                              title="Exit Fullscreen"
+                            >
+                              <Minimize2 className="w-6 h-6" />
+                            </button>
+                          </div>
                         </div>
                       )}
                     </>
@@ -4162,8 +4250,14 @@ const VideoPlayer = () => {
                           <button
                             onClick={markAsComplete}
                             disabled={currentVideo.progress >= 100}
-                            className={`btn relative inline-flex items-center justify-center px-6 py-2 font-mono text-sm font-bold tracking-wider ${currentVideo.progress >= 100 ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                            className={`relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium text-sm tracking-wide transition-all duration-200 ${
+                              currentVideo.progress >= 100 
+                                ? 'bg-green-500/20 text-green-100 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-95 cursor-pointer'
+                            }`}
                           >
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                            {currentVideo.progress >= 100 ? 'Completed' : 'Mark as Complete'}
                             <span className="cube">
                               <span className="bg-top">
                                 <span className="bg-inner"></span>
@@ -5464,8 +5558,51 @@ const VideoPlayer = () => {
                   transition={{ delay: 0.6, type: 'spring', stiffness: 180, damping: 18 }}
                   className="mt-2 text-2xl font-semibold text-black text-center drop-shadow-[0_2px_8px_white] z-10"
                 >
-                  You completed this video
+                  {uncompletedVideos.length === 0 
+                    ? 'You completed the entire playlist!' 
+                    : 'You completed this video'}
                 </motion.div>
+                
+                {/* Action Buttons */}
+                <motion.div 
+                  className="flex flex-col sm:flex-row gap-4 mt-6 z-10 w-full max-w-xs"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  {uncompletedVideos.length > 0 ? (
+                    <button
+                      onClick={() => {
+                        setShowCompletionDialog(false);
+                        const nextUncompletedIndex = playlist.videos.findIndex(v => v.progress < 100);
+                        if (nextUncompletedIndex !== -1) {
+                          selectVideo(nextUncompletedIndex);
+                        }
+                      }}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex-1"
+                    >
+                      Next Video
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowCompletionDialog(false);
+                        navigate(-1); // Go back to previous page (video detail)
+                      }}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex-1"
+                    >
+                      Return to Course
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => setShowCompletionDialog(false)}
+                    className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex-1"
+                  >
+                    {uncompletedVideos.length > 0 ? 'Close' : 'Continue Watching'}
+                  </button>
+                </motion.div>
+                
                 {/* Shimmer animation keyframes */}
                 <style>{`
                   @keyframes shimmer {
@@ -5494,7 +5631,6 @@ const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
-  const [hoverTime, setHoverTime] = useState(null);
   const [isBuffering, setIsBuffering] = useState(false);
   const timelineRef = useRef(null);
   const rafRef = useRef(null);
@@ -5588,9 +5724,9 @@ const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
   // Hover time for tooltip
   const handleMouseMove = useCallback((e) => {
     const time = getTimeFromEvent(e);
-    setHoverTime(time);
+    // setHoverTime(time);
   }, [getTimeFromEvent]);
-  const handleMouseLeave = useCallback(() => setHoverTime(null), []);
+  // const handleMouseLeave = useCallback(() => setHoverTime(null), []);
 
   // Keyboard support
   const handleKeyDown = useCallback((e) => {
@@ -5602,63 +5738,46 @@ const VideoTimeline = ({ playerRef, isPlayerReady, currentVideo }) => {
     }
   }, [playerRef, duration]);
 
-  // Render
-  const percent = duration ? ((isDragging ? dragTime : currentTime) / duration) * 100 : 0;
+  // Format time as MM:SS or HH:MM:SS
+  const formatTime = (timeInSeconds) => {
+    const seconds = Math.floor(timeInSeconds % 60);
+    const minutes = Math.floor((timeInSeconds / 60) % 60);
+    const hours = Math.floor(timeInSeconds / 3600);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate percentage for progress bar
+  const progressPercent = duration ? ((isDragging ? dragTime : currentTime) / duration) * 100 : 0;
+  
   return (
-    <div className="w-full flex flex-col items-center">
-      <div
-        ref={timelineRef}
-        className="w-full h-3 bg-gray-200 dark:bg-slate-700 rounded-full relative cursor-pointer group"
-        style={{ maxWidth: 600 }}
-        onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-        aria-label="Video timeline"
-        role="slider"
-        aria-valuenow={Math.floor(isDragging ? dragTime : currentTime)}
-        aria-valuemin={0}
-        aria-valuemax={Math.floor(duration)}
-      >
-        <div
-          className="h-3 bg-blue-500 rounded-full transition-all"
-          style={{ width: `${percent}%` }}
-        />
-        {/* Thumb */}
-        <div
-          className="absolute top-1/2 left-0 transform -translate-y-1/2"
-          style={{ left: `${percent}%` }}
+    <div className="w-full">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-white/80 w-12 text-right">
+          {formatTime(isDragging ? dragTime : currentTime)}
+        </span>
+        <div 
+          ref={timelineRef}
+          className="relative flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group"
+          onMouseDown={handlePointerDown}
+          onTouchStart={handlePointerDown}
         >
-          <div className="w-5 h-5 bg-blue-600 border-2 border-white rounded-full shadow -ml-2 -mt-1 group-hover:scale-110 transition-transform cursor-pointer" />
+          <div 
+            className="absolute left-0 top-0 h-full bg-red-500 rounded-full group-hover:bg-red-400 transition-colors"
+            style={{ width: `${progressPercent}%` }}
+          />
+          {isBuffering && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-3 h-3 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
         </div>
-        {/* Tooltip */}
-        {hoverTime !== null && (
-          <div
-            className="absolute -top-8 left-0 px-2 py-1 bg-black text-white text-xs rounded shadow"
-            style={{ left: `${((hoverTime / duration) * 100).toFixed(2)}%`, transform: 'translateX(-50%)' }}
-          >
-            {formatTime(Math.floor(hoverTime))}
-          </div>
-        )}
-        {/* Drag tooltip */}
-        {isDragging && (
-          <div
-            className="absolute -top-8 left-0 px-2 py-1 bg-blue-700 text-white text-xs rounded shadow"
-            style={{ left: `${((dragTime / duration) * 100).toFixed(2)}%`, transform: 'translateX(-50%)' }}
-          >
-            {formatTime(Math.floor(dragTime))}
-          </div>
-        )}
-        {/* Buffering spinner */}
-        {isBuffering && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 animate-spin w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full" />
-        )}
-      </div>
-      <div className="flex justify-between w-full mt-1 text-xs text-gray-600 dark:text-gray-300" style={{ maxWidth: 600 }}>
-        <span>{formatTime(Math.floor(isDragging ? dragTime : currentTime))}</span>
-        <span>{formatTime(Math.floor(duration))}</span>
+        <span className="text-xs text-white/80 w-12">
+          {formatTime(duration)}
+        </span>
       </div>
     </div>
   );
