@@ -490,7 +490,6 @@ const Profile = () => {
       theme: theme === 'dark' ? 'dark' : 'light'
     };
     shareProgressCard(cardData);
-    setShowProgressCard(true);
   };
 
   // Update shareProgressCard function
@@ -880,7 +879,7 @@ const Profile = () => {
                     <p className={`text-sm ${textMuted}`}>Collect badges by completing learning milestones</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                       {/* Learning Badges */}
                       <div className={`p-4 border rounded-xl ${theme === 'dark' ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-700' : 'border-gray-200 bg-gradient-to-br from-blue-50 to-white'}`}>
                         <div className="flex items-center gap-3 mb-3">
@@ -1131,6 +1130,7 @@ const Profile = () => {
           </div>
 
           {/* Statistics Grid */}
+          {activeTab !== 'badge' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
             {/* Learning Rank Card */}
             <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`} style={{ animationDelay: '150ms' }}>
@@ -1210,13 +1210,13 @@ const Profile = () => {
                       {rankHistory.map((item, i) => {
                         const x = 30 + (i * 40);
                         return (
-                                                      <text 
-                              key={i} 
-                              x={x} 
-                              y="115" 
-                              textAnchor="middle" 
+                          <text 
+                            key={i} 
+                            x={x} 
+                            y="115" 
+                            textAnchor="middle" 
                               className={`text-[9px] ${theme === 'dark' ? 'fill-gray-300' : 'fill-gray-500'}`}
-                            >
+                          >
                             {item.day}
                           </text>
                         );
@@ -1290,6 +1290,7 @@ const Profile = () => {
               </CardContent>
             </Card>
           </div>
+          )}
 
           {/* Achievements Section */}
           <div className="grid grid-cols-1 gap-6">

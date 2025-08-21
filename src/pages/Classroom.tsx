@@ -1806,6 +1806,7 @@ const Classroom: React.FC = () => {
 
   // --- Add at the top of the Classroom component, after useState hooks ---
   const [assignmentUploads, setAssignmentUploads] = useState({}); // { [assignmentId]: { file: File | null, name: string } }
+const [showCreateProgressCard, setShowCreateProgressCard] = useState(false);
 
   // Helper to handle file selection for assignments
   const handleAssignmentFileChange = (assignmentId, file) => {
@@ -1996,6 +1997,22 @@ const Classroom: React.FC = () => {
                 }`}>
                   <Sparkles className="w-4 h-4" />
                   <span>Activity</span>
+                </TabsTrigger>
+                <TabsTrigger value="progress" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
+                  <BarChart3 className="w-4 h-4" />
+                  <span>Progress</span>
+                </TabsTrigger>
+                <TabsTrigger value="rank" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium ${
+                  theme === 'dark'
+                    ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-blue-400 data-[state=active]:font-semibold hover:bg-gray-700/50 text-gray-300'
+                    : 'data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 data-[state=active]:font-semibold hover:bg-white/50'
+                }`}>
+                  <Trophy className="w-4 h-4" />
+                  <span>Rank</span>
                 </TabsTrigger>
               </TabsList>
               
@@ -4279,6 +4296,179 @@ const Classroom: React.FC = () => {
                 </Dialog>
               </TabsContent>
               
+              {/* Progress Tab */}
+              <TabsContent value="progress">
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg">
+                        <BarChart3 className="w-8 h-8 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Progress Tracking</CardTitle>
+                        <p className="text-gray-600 text-lg">Create and manage your learning progress</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Create Progress Card Section */}
+                <div className="text-center py-16">
+                  <div className={`rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 ${
+                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}>
+                    <Plus className={`w-12 h-12 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                  </div>
+                  <h3 className={`text-xl font-semibold mb-2 ${textColor}`}>No Progress Cards Yet</h3>
+                  <p className={`mb-6 ${textMuted}`}>Start tracking your learning journey by creating your first progress card!</p>
+                  <Button 
+                    onClick={() => setShowCreateProgressCard(true)} 
+                    className="bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full px-8 py-3 hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create Progress Card
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Rank Tab */}
+              <TabsContent value="rank">
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 shadow-lg">
+                        <Trophy className="w-8 h-8 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Achievements & Rankings</CardTitle>
+                        <p className="text-gray-600 text-lg">Your learning milestones and achievements</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Minimal Achievement Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {/* Top Achiever Badge */}
+                  <Card className={`border-0 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+                  }`}>
+                    <CardHeader className={`border-b ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-gray-700'
+                        : 'bg-gradient-to-r from-yellow-50 to-orange-50 border-gray-100'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 shadow-md">
+                          <Trophy className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className={`text-lg font-bold ${textColor}`}>Top Achiever</CardTitle>
+                          <p className={`text-sm mt-1 ${textMuted}`}>Consistent performance</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-yellow-600 mb-2">🥇</div>
+                        <p className={`text-sm ${textMuted}`}>Maintained A+ grade for 3 consecutive months</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Active Learner Badge */}
+                  <Card className={`border-0 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+                  }`}>
+                    <CardHeader className={`border-b ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-gray-700'
+                        : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-100'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 shadow-md">
+                          <BookOpen className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className={`text-lg font-bold ${textColor}`}>Active Learner</CardTitle>
+                          <p className={`text-sm mt-1 ${textMuted}`}>Regular participation</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-blue-600 mb-2">📚</div>
+                        <p className={`text-sm ${textMuted}`}>Completed 15+ assignments on time</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Team Player Badge */}
+                  <Card className={`border-0 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+                  }`}>
+                    <CardHeader className={`border-b ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-r from-green-900/20 to-emerald-900/20 border-gray-700'
+                        : 'bg-gradient-to-r from-green-50 to-emerald-50 border-gray-100'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-green-400 to-emerald-500 shadow-md">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className={`text-lg font-bold ${textColor}`}>Team Player</CardTitle>
+                          <p className={`text-sm mt-1 ${textMuted}`}>Collaboration skills</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600 mb-2">🤝</div>
+                        <p className={`text-sm ${textMuted}`}>Helped 5+ classmates with assignments</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {/* Current Rank Display */}
+                <Card className={`border-0 shadow-xl rounded-2xl overflow-hidden ${
+                  theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+                }`}>
+                  <CardHeader className={`border-b ${
+                    theme === 'dark'
+                      ? 'bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-gray-700'
+                      : 'bg-gradient-to-r from-purple-50 to-pink-50 border-gray-100'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 shadow-md">
+                        <Star className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className={`text-lg font-bold ${textColor}`}>Current Rank</CardTitle>
+                        <p className={`text-sm mt-1 ${textMuted}`}>Your position in the class</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <div className="text-6xl font-bold text-purple-600 mb-4">#3</div>
+                      <p className={`text-lg ${textColor} mb-2`}>Excellent Performance!</p>
+                      <p className={`text-sm ${textMuted}`}>You're in the top 10% of your class</p>
+                      <div className="mt-4 flex justify-center">
+                        <Badge variant="outline" className={`font-semibold px-4 py-2 text-sm shadow-md ${
+                          theme === 'dark'
+                            ? 'bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-purple-600 text-purple-300'
+                            : 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-purple-700'
+                        }`}>
+                          🎯 Elite Student
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
               {/* Enhanced Upload Form Dialog */}
               <Dialog open={showUploadForm} onOpenChange={setShowUploadForm}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -4723,6 +4913,113 @@ const Classroom: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Create Progress Card Dialog */}
+      <Dialog open={showCreateProgressCard} onOpenChange={setShowCreateProgressCard}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Create Progress Card</DialogTitle>
+            <DialogDescription className="text-gray-600">Track your learning progress and achievements</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 pt-4">
+            {/* Progress Type Selection */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Progress Type</Label>
+              <Select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select progress type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="assignment">Assignment Completion</SelectItem>
+                  <SelectItem value="quiz">Quiz Performance</SelectItem>
+                  <SelectItem value="project">Project Milestone</SelectItem>
+                  <SelectItem value="participation">Class Participation</SelectItem>
+                  <SelectItem value="improvement">Skill Improvement</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Progress Title */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Progress Title</Label>
+              <Input
+                placeholder="e.g., Completed Advanced Algebra Chapter 3"
+                className="py-2"
+              />
+            </div>
+            
+            {/* Progress Description */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Description</Label>
+              <Textarea
+                placeholder="Describe your progress and what you've learned..."
+                className="py-2"
+                rows={3}
+              />
+            </div>
+            
+            {/* Progress Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Score (Optional)</Label>
+                <Input
+                  placeholder="e.g., 85% or 17/20"
+                  className="py-2"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Date Achieved</Label>
+                <Input
+                  type="date"
+                  className="py-2"
+                />
+              </div>
+            </div>
+            
+            {/* Difficulty Level */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Difficulty Level</Label>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1">Easy</Button>
+                <Button variant="outline" size="sm" className="flex-1">Medium</Button>
+                <Button variant="outline" size="sm" className="flex-1">Hard</Button>
+              </div>
+            </div>
+            
+            {/* Tags */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Tags (Optional)</Label>
+              <Input
+                placeholder="e.g., algebra, math, problem-solving"
+                className="py-2"
+              />
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2 justify-end pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateProgressCard(false)}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Handle progress card creation
+                  setShowCreateProgressCard(false);
+                  toast.success('Progress card created successfully!');
+                }}
+                className="bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700"
+              >
+                Create Progress Card
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       <ToastContainer />
     </div>
   );
