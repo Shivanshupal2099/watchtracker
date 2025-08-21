@@ -1,23 +1,18 @@
-import { useTheme } from "next-themes";
-import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronLeft, ChevronRight, LogOut, Moon, Sun } from 'lucide-react';
+import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import univoraLogo from '../assets/univora.png';
 import univoralabLogo from '../assets/univoralab.png';
 // Logos are now available as univoraLogo and univoralabLogo
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarHeader,
   SidebarFooter,
-  useSidebar,
+  SidebarHeader,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -82,30 +77,63 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { state, toggleSidebar, open } = useSidebar();
-  const isOpen = state === 'expanded';
-  const { theme, setTheme } = useTheme();
-  const darkMode = theme === 'dark';
-  const [isHovered, setIsHovered] = useState(false);
   const [activeHover, setActiveHover] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Mobile Footer Navigation (always visible on small screens)
+  const MobileFooter = () => (
+    <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center py-2 z-50 md:hidden">
+      {menuItems.map((item) => (
+        <button
+          key={item.title}
+          onClick={() => navigate(item.url)}
+          className={cn(
+            "flex flex-col items-center justify-center px-2 py-1",
+            location.pathname === item.url
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-zinc-500 dark:text-zinc-400"
+          )}
+        >
+          {item.customIcon ? (
+            <img src={item.customIcon} alt={item.title} className="w-6 h-6" />
+          ) : (
+            <item.icon className="w-6 h-6" />
+          )}
+          <span className="text-xs mt-1">{item.title}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
+  // Only show sidebar on desktop/tablet
+  if (isMobile) {
+    return <MobileFooter />;
+  }
 
   return (
-    <div className="h-screen flex flex-col">
-      <Sidebar 
+    <>
+      <div
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out",
           "bg-gradient-to-b from-sidebar to-sidebar/80 backdrop-blur-md text-sidebar-foreground border-r border-sidebar-border/20 shadow-2xl",
-          isOpen ? 'w-24' : 'w-20 hover:w-24',
-          "overflow-y-auto overflow-x-hidden scrollbar-hide"
+          "overflow-y-auto overflow-x-hidden scrollbar-hide",
+          "md:flex",
+          "w-24"
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          setActiveHover(null);
-        }}
       >
         {/* Minimalist Logo Header */}
-        <SidebarHeader className="relative flex items-center justify-center h-28 px-2">
+        <SidebarHeader 
+          className="relative flex items-center justify-center h-28 px-2"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <motion.div 
             className="group/logo relative"
             whileHover={{ 
@@ -223,65 +251,13 @@ export function AppSidebar() {
                       )} 
                     />
                   )}
-                  
-                  {/* Tooltip */}
-                  <div className={cn(
-                    "absolute left-full ml-3 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap",
-                    "bg-foreground text-background shadow-xl pointer-events-none transition-all duration-200",
-                    "flex items-center",
-                    isHovered ? 'opacity-100' : 'opacity-0',
-                    activeHover === item.title ? 'scale-100' : 'scale-95',
-                    "before:content-[''] before:absolute before:right-full before:top-1/2 before:-translate-y-1/2",
-                    "before:border-t-4 before:border-b-4 before:border-l-0 before:border-r-4 before:border-t-transparent before:border-b-transparent",
-                    "before:border-r-foreground before:border-l-0"
-                  )}>
-                    {item.title}
-                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           ))}
         </SidebarContent>
 
-        <SidebarFooter className="flex flex-col items-center space-y-4 p-4">
-          {/* Theme Toggle */}
-          <button
-            onClick={() => setTheme(darkMode ? 'light' : 'dark')}
-            className={cn(
-              "group/theme relative w-12 h-12 rounded-xl flex items-center justify-center",
-              "text-foreground/70 hover:text-foreground transition-all duration-200",
-              "hover:bg-foreground/5"
-            )}
-            onMouseEnter={() => setActiveHover('theme')}
-            onMouseLeave={() => setActiveHover(null)}
-          >
-            {darkMode ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-            {isHovered && (
-              <motion.div 
-                className="absolute left-full ml-2 bg-foreground/90 text-background px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg"
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0,
-                  transition: { 
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 25
-                  }
-                }}
-                exit={{ opacity: 0, x: -5 }}
-              >
-                <div className="absolute left-0 top-1/2 -ml-1 w-2 h-2 bg-foreground/90 rotate-45 -translate-y-1/2"></div>
-                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-              </motion.div>
-            )}
-          </button>
-
-          {/* Settings Button */}
+        <SidebarFooter className="flex flex-col items-center p-4">
           <button
             onClick={() => navigate('/settings')}
             className={cn(
@@ -295,62 +271,9 @@ export function AppSidebar() {
             onMouseLeave={() => setActiveHover(null)}
           >
             <Settings className="w-5 h-5" />
-            {isHovered && (
-              <motion.div 
-                className="absolute left-full ml-2 bg-foreground/90 text-background px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg"
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0,
-                  transition: { 
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 25
-                  }
-                }}
-                exit={{ opacity: 0, x: -5 }}
-              >
-                <div className="absolute left-0 top-1/2 -ml-1 w-2 h-2 bg-foreground/90 rotate-45 -translate-y-1/2"></div>
-                <span>Settings</span>
-              </motion.div>
-            )}
-          </button>
-          
-          <div className="w-8 h-px bg-foreground/10"></div>
-          
-          {/* Logout Button */}
-          <button
-            className={cn(
-              "group/logout relative w-12 h-12 rounded-xl flex items-center justify-center",
-              "text-foreground/70 hover:text-foreground transition-all duration-200",
-              "hover:bg-foreground/5"
-            )}
-            onMouseEnter={() => setActiveHover('logout')}
-            onMouseLeave={() => setActiveHover(null)}
-          >
-            <LogOut className="w-5 h-5" />
-            {isHovered && (
-              <motion.div 
-                className="absolute left-full ml-2 bg-foreground/90 text-background px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg"
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0,
-                  transition: { 
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 25
-                  }
-                }}
-                exit={{ opacity: 0, x: -5 }}
-              >
-                <div className="absolute left-0 top-1/2 -ml-1 w-2 h-2 bg-foreground/90 rotate-45 -translate-y-1/2"></div>
-                <span>Logout</span>
-              </motion.div>
-            )}
           </button>
         </SidebarFooter>
-      </Sidebar>
-    </div>
+      </div>
+    </>
   );
 }

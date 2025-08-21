@@ -107,10 +107,10 @@ const AddCodingPlaylistModal = ({ isOpen, onClose, onAdd }: AddCodingPlaylistMod
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto p-2 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-              <Code className="w-6 h-6" />
+            <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              <Code className="w-5 h-5 sm:w-6 sm:h-6" />
               Create Coding Practice Playlist
             </DialogTitle>
           </DialogHeader>
@@ -141,40 +141,43 @@ const AddCodingPlaylistModal = ({ isOpen, onClose, onAdd }: AddCodingPlaylistMod
                 />
               </div>
 
-              <div>
-                <Label htmlFor="daily-target">Questions per Day</Label>
-                <Input
-                  id="daily-target"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={targetQuestionsPerDay}
-                  onChange={(e) => setTargetQuestionsPerDay(parseInt(e.target.value) || 2)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="weekly-goal">Weekly Goal</Label>
-                <Input
-                  id="weekly-goal"
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={weeklyGoal}
-                  onChange={(e) => setWeeklyGoal(parseInt(e.target.value) || 10)}
-                  className="mt-1"
-                />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="daily-target">Questions per Day</Label>
+                  <Input
+                    id="daily-target"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={targetQuestionsPerDay}
+                    onChange={(e) => setTargetQuestionsPerDay(parseInt(e.target.value) || 2)}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="weekly-goal">Weekly Goal</Label>
+                  <Input
+                    id="weekly-goal"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={weeklyGoal}
+                    onChange={(e) => setWeeklyGoal(parseInt(e.target.value) || 10)}
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Add Questions Section */}
             <div className="space-y-4 border-t pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <h3 className="font-semibold">Coding Questions</h3>
                 <Button
                   onClick={() => setIsQuestionModalOpen(true)}
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Question
@@ -188,10 +191,10 @@ const AddCodingPlaylistModal = ({ isOpen, onClose, onAdd }: AddCodingPlaylistMod
                   <div className="max-h-60 overflow-y-auto space-y-2">
                     {questions.map((question, index) => (
                       <Card key={index} className="p-3">
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <div className="flex-1">
                             <h4 className="font-medium text-sm">{question.title}</h4>
-                            <div className="flex gap-2 mt-1">
+                            <div className="flex gap-2 mt-1 flex-wrap">
                               <span className={`text-xs px-2 py-1 rounded ${
                                 question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
                                 question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -221,7 +224,7 @@ const AddCodingPlaylistModal = ({ isOpen, onClose, onAdd }: AddCodingPlaylistMod
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={onClose}

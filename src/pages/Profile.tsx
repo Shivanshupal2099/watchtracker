@@ -139,6 +139,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showActivityHeatmap, setShowActivityHeatmap] = useState(false);
+  const [activeTab, setActiveTab] = useState<'badge' | 'rank' | 'progress'>('badge');
   const [userStats, setUserStats] = useState<UserStats>({
     daysActive: 0,
     hoursLearning: 0,
@@ -429,15 +430,17 @@ const Profile = () => {
                           'bg-gradient-to-r from-gray-600 to-blue-400';
 
   // Theme-specific styles
-  const bgGradient = 'bg-white';
-  const cardBg = 'bg-white border border-gray-200 shadow-sm';
-  const textColor = 'text-black';
-  const textMuted = 'text-gray-500';
-  const headerGradient = 'bg-white';
+  const bgGradient = theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-white';
+  const cardBg = theme === 'dark' ? 'bg-gray-800/95 border-gray-700/60 shadow-lg' : 'bg-white border-gray-200 shadow-sm';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-black';
+  const textMuted = theme === 'dark' ? 'text-gray-300' : 'text-gray-500';
+  const headerGradient = theme === 'dark' ? 'bg-gray-900/95' : 'bg-white';
   const cardHoverEffect = 'transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg';
-  const statCardGradient = 'bg-white';
-  const rankCardGradient = 'bg-white';
-  const rankCardHover = 'relative transition-all duration-300 border border-gray-200 shadow-sm rounded-lg';
+  const statCardGradient = theme === 'dark' ? 'bg-gray-800/95' : 'bg-white';
+  const rankCardGradient = theme === 'dark' ? 'bg-gray-800/95' : 'bg-white';
+  const rankCardHover = theme === 'dark' 
+    ? 'relative transition-all duration-300 border border-gray-700/60 shadow-lg rounded-lg bg-gray-800/95' 
+    : 'relative transition-all duration-300 border border-gray-200 shadow-sm rounded-lg bg-white';
 
   // Remove the allAwards array and keep only the basic achievements
   const basicAchievements = [
@@ -491,7 +494,6 @@ const Profile = () => {
     };
     setProgressCard(cardData);
     shareProgressCard(cardData);
-    setShowProgressCard(true);
   };
 
   // Update shareProgressCard function
@@ -523,7 +525,7 @@ const Profile = () => {
       if (navigator.share && progressCard) {
         await navigator.share({
           title: 'My Learning Progress',
-          text: `Check out my learning progress on ${progressCard.platformName}! I'm at ${progressCard.achievements.level} level with ${progressCard.totalProgress.coins} coins!`,
+          text: `Check out my learning progress on ${cardData?.platformName || 'Learning Platform'}! I'm at ${cardData?.achievements.level || 'Beginner'} level with ${cardData?.totalProgress.coins || 0} coins!`,
           files: [new File([await (await fetch(image)).blob()], 'learning-progress.png', { type: 'image/png' })]
         });
       }
@@ -573,9 +575,9 @@ const Profile = () => {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-white'}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+    <div className={`min-h-screen transition-colors duration-300 ${bgGradient}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
       {/* Enhanced Header Section */}
-      <div className={`relative border-b ${theme === 'dark' ? 'border-gray-800' : 'border-border/50'} shadow-2xl mt-8 md:mt-12 ${theme === 'dark' ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} transition-all duration-500`}>
+      <div className={`relative border-b ${theme === 'dark' ? 'border-gray-700/60' : 'border-gray-200/50'} shadow-2xl mt-8 md:mt-12 ${headerGradient} backdrop-blur-sm transition-all duration-500`}>
         <div className="container mx-auto px-4 py-0">
           <div className={`${cardBg} rounded-xl p-4 transition-all duration-300 ${cardHoverEffect} relative overflow-hidden`}>
             <div className="relative z-10">
@@ -852,7 +854,296 @@ const Profile = () => {
           
 
         <div className="container mx-auto px-4 py-8">
+          {/* Profile Tabs Section */}
+          <div className="mb-8">
+            <div className={`flex space-x-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} p-1 rounded-xl w-fit mx-auto`}>
+              {[
+                { id: 'badge', label: 'Badges', icon: Award },
+                { id: 'rank', label: 'Rankings', icon: Trophy },
+                { id: 'progress', label: 'Progress', icon: BarChart3 }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as 'badge' | 'rank' | 'progress')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? `${theme === 'dark' ? 'bg-gray-700 text-blue-400' : 'bg-white text-blue-600'} shadow-sm`
+                        : `${theme === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'}`
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-6">
+              {activeTab === 'badge' && (
+                <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+                      <Award className="w-5 h-5 text-yellow-500" />
+                      Your Badges & Achievements
+                    </CardTitle>
+                    <p className={`text-sm ${textMuted}`}>Collect badges by completing learning milestones</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                      {/* Learning Badges */}
+                      <div className={`p-4 border rounded-xl ${theme === 'dark' ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-700' : 'border-gray-200 bg-gradient-to-br from-blue-50 to-white'}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
+                            <BookOpen className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${textColor}`}>Learning Badges</h4>
+                            <p className={`text-xs ${textMuted}`}>Based on study time</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { name: 'Beginner', condition: userStats.hoursLearning >= 1, icon: '🌱' },
+                            { name: 'Intermediate', condition: userStats.hoursLearning >= 10, icon: '📚' },
+                            { name: 'Advanced', condition: userStats.hoursLearning >= 50, icon: '🎯' },
+                            { name: 'Master', condition: userStats.hoursLearning >= 100, icon: '👑' }
+                          ].map((badge) => (
+                            <div key={badge.name} className={`flex items-center justify-between p-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{badge.icon}</span>
+                                <span className={`text-sm font-medium ${textColor}`}>{badge.name}</span>
+                              </div>
+                              <Badge variant={badge.condition ? "default" : "secondary"} className={badge.condition ? 'bg-green-100 text-green-800' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-500'}>
+                                {badge.condition ? 'Earned' : 'Locked'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Streak Badges */}
+                      <div className={`p-4 border rounded-xl ${theme === 'dark' ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-700' : 'border-gray-200 bg-gradient-to-br from-orange-50 to-white'}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-orange-900/50' : 'bg-orange-100'}`}>
+                            <Flame className={`w-5 h-5 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`} />
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${textColor}`}>Streak Badges</h4>
+                            <p className={`text-xs ${textMuted}`}>Based on consistency</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { name: '3-Day Streak', condition: userStats.currentStreak >= 3, icon: '🔥' },
+                            { name: '7-Day Streak', condition: userStats.currentStreak >= 7, icon: '⚡' },
+                            { name: '30-Day Streak', condition: userStats.currentStreak >= 30, icon: '🚀' },
+                            { name: '100-Day Streak', condition: userStats.currentStreak >= 100, icon: '💎' }
+                          ].map((badge) => (
+                            <div key={badge.name} className={`flex items-center justify-between p-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{badge.icon}</span>
+                                <span className={`text-sm font-medium ${textColor}`}>{badge.name}</span>
+                              </div>
+                              <Badge variant={badge.condition ? "default" : "secondary"} className={badge.condition ? 'bg-orange-100 text-orange-800' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-500'}>
+                                {badge.condition ? 'Earned' : 'Locked'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Goal Badges */}
+                      <div className={`p-4 border rounded-xl ${theme === 'dark' ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-700' : 'border-gray-200 bg-gradient-to-br from-green-50 to-white'}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-green-900/50' : 'bg-green-100'}`}>
+                            <Target className={`w-5 h-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${textColor}`}>Goal Badges</h4>
+                            <p className={`text-xs ${textMuted}`}>Based on completion</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { name: 'Goal Setter', condition: userStats.problemsSolved >= 1, icon: '🎯' },
+                            { name: 'Goal Achiever', condition: userStats.problemsSolved >= 5, icon: '✅' },
+                            { name: 'Goal Master', condition: userStats.problemsSolved >= 20, icon: '🏆' },
+                            { name: 'Goal Legend', condition: userStats.problemsSolved >= 50, icon: '💫' }
+                          ].map((badge) => (
+                            <div key={badge.name} className={`flex items-center justify-between p-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{badge.icon}</span>
+                                <span className={`text-sm font-medium ${textColor}`}>{badge.name}</span>
+                              </div>
+                              <Badge variant={badge.condition ? "default" : "secondary"} className={badge.condition ? 'bg-green-100 text-green-800' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-500'}>
+                                {badge.condition ? 'Earned' : 'Locked'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === 'rank' && (
+                <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                      Your Rankings & Performance
+                    </CardTitle>
+                    <p className={`text-sm ${textMuted}`}>Track your position across different leaderboards</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Current Rankings */}
+                      <div className="space-y-4">
+                        <h4 className={`font-semibold ${textColor}`}>Current Rankings</h4>
+                        <div className="space-y-3">
+                          {[
+                            { label: 'Branch Rank', rank: 5, total: 45, trend: '+2', color: 'blue' },
+                            { label: 'Section Rank', rank: 12, total: 120, trend: '+5', color: 'green' },
+                            { label: 'College Rank', rank: 28, total: 500, trend: '+8', color: 'purple' },
+                            { label: 'Global Rank', rank: 156, total: 10000, trend: '+15', color: 'amber' }
+                          ].map((item) => (
+                            <div key={item.label} className={`flex items-center justify-between p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full bg-${item.color}-500`}></div>
+                                <div>
+                                  <p className={`font-medium ${textColor}`}>{item.label}</p>
+                                  <p className={`text-sm ${textMuted}`}>#{item.rank} of {item.total}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-sm ${textMuted}`}>{item.trend}</span>
+                                {item.trend.startsWith('+') ? (
+                                  <TrendingUp className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <TrendingDown className="w-4 h-4 text-red-500" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Performance Metrics */}
+                      <div className="space-y-4">
+                        <h4 className={`font-semibold ${textColor}`}>Performance Metrics</h4>
+                        <div className="space-y-3">
+                          {[
+                            { label: 'Learning Time', value: `${userStats.hoursLearning}h`, target: '20h', progress: Math.min(100, (userStats.hoursLearning / 20) * 100), color: 'blue' },
+                            { label: 'Active Days', value: userStats.daysActive, target: 30, progress: Math.min(100, (userStats.daysActive / 30) * 100), color: 'green' },
+                            { label: 'Completion Rate', value: `${Math.round((userStats.tasksCompleted / Math.max(1, userStats.problemsSolved)) * 100)}%`, target: '90%', progress: Math.min(100, (userStats.tasksCompleted / Math.max(1, userStats.problemsSolved)) * 100), color: 'purple' }
+                          ].map((metric) => (
+                            <div key={metric.label} className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="font-medium text-gray-900">{metric.label}</span>
+                                <span className="text-gray-500">{metric.value} / {metric.target}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`bg-${metric.color}-500 h-2 rounded-full transition-all duration-500`}
+                                  style={{ width: `${metric.progress}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === 'progress' && (
+                <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+                      <BarChart3 className="w-5 h-5 text-blue-500" />
+                      Progress Tracking & Analytics
+                    </CardTitle>
+                    <p className={`text-sm ${textMuted}`}>Monitor your learning journey with detailed analytics</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Weekly Progress */}
+                      <div className="space-y-4">
+                        <h4 className={`font-semibold ${textColor}`}>Weekly Progress</h4>
+                        <div className="space-y-3">
+                          {[
+                            { day: 'Mon', hours: 2.5, color: 'blue' },
+                            { day: 'Tue', hours: 3.2, color: 'green' },
+                            { day: 'Wed', hours: 1.8, color: 'purple' },
+                            { day: 'Thu', hours: 4.1, color: 'amber' },
+                            { day: 'Fri', hours: 2.9, color: 'pink' },
+                            { day: 'Sat', hours: 3.5, color: 'indigo' },
+                            { day: 'Sun', hours: 2.2, color: 'red' }
+                          ].map((item) => (
+                            <div key={item.day} className="flex items-center gap-3">
+                              <span className={`w-12 text-sm font-medium ${textMuted}`}>{item.day}</span>
+                              <div className={`flex-1 rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                <div 
+                                  className={`bg-${item.color}-500 h-2 rounded-full transition-all duration-500`}
+                                  style={{ width: `${Math.min(100, (item.hours / 5) * 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className={`w-12 text-sm text-right ${textMuted}`}>{item.hours}h</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Monthly Overview */}
+                      <div className="space-y-4">
+                        <h4 className={`font-semibold ${textColor}`}>Monthly Overview</h4>
+                        <div className="space-y-3">
+                          {[
+                            { metric: 'Total Hours', value: userStats.hoursLearning, target: 80, unit: 'h' },
+                            { metric: 'Videos Completed', value: userStats.problemsSolved, target: 50, unit: '' },
+                            { metric: 'Goals Achieved', value: userStats.tasksCompleted, target: 30, unit: '' },
+                            { metric: 'Active Days', value: userStats.daysActive, target: 25, unit: 'days' }
+                          ].map((item) => (
+                            <div key={item.metric} className={`flex items-center justify-between p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                              <span className={`font-medium ${textColor}`}>{item.metric}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold text-blue-600">{item.value}{item.unit}</span>
+                                <span className={`text-sm ${textMuted}`}>/ {item.target}{item.unit}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Summary */}
+                    <div className={`mt-6 p-4 rounded-xl border ${theme === 'dark' ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-800/50' : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-100'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className={`font-semibold ${textColor}`}>Overall Progress</h4>
+                          <p className={`text-sm ${textMuted}`}>You're making great progress in your learning journey!</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {Math.round((userStats.hoursLearning / 100) * 100)}%
+                          </div>
+                          <p className="text-sm text-gray-500">Complete</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
           {/* Statistics Grid */}
+          {activeTab !== 'badge' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
             {/* Learning Rank Card */}
             <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`} style={{ animationDelay: '150ms' }}>
@@ -937,7 +1228,7 @@ const Profile = () => {
                             x={x} 
                             y="115" 
                             textAnchor="middle" 
-                            className="text-[9px] fill-gray-500"
+                              className={`text-[9px] ${theme === 'dark' ? 'fill-gray-300' : 'fill-gray-500'}`}
                           >
                             {item.day}
                           </text>
@@ -950,7 +1241,7 @@ const Profile = () => {
                 <div className="mt-4 flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-amber-400"></div>
-                    <span className="text-gray-600">Your Rank Trend</span>
+                    <span className={textMuted}>Your Rank Trend</span>
                   </div>
                   <div className="flex items-center gap-1 text-amber-600 font-medium">
                     <TrendingUp className="w-3.5 h-3.5" />
@@ -972,10 +1263,10 @@ const Profile = () => {
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Learning Time</span>
-                      <span className="font-medium">{Math.round(userStats.hoursLearning * 10) / 10}h</span>
+                      <span className={textMuted}>Learning Time</span>
+                      <span className={`font-medium ${textColor}`}>{Math.round(userStats.hoursLearning * 10) / 10}h</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className={`w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-2 overflow-hidden`}>
                       <div 
                         className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out" 
                         style={{ width: `${Math.min(100, (userStats.hoursLearning / 20) * 100)}%` }}
@@ -985,10 +1276,10 @@ const Profile = () => {
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Problems Solved</span>
-                      <span className="font-medium">{userStats.problemsSolved}</span>
+                      <span className={textMuted}>Problems Solved</span>
+                      <span className={`font-medium ${textColor}`}>{userStats.problemsSolved}</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className={`w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-2 overflow-hidden`}>
                       <div 
                         className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-500 ease-out" 
                         style={{ width: `${Math.min(100, (userStats.problemsSolved / 15) * 100)}%` }}
@@ -998,10 +1289,10 @@ const Profile = () => {
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Active Days</span>
-                      <span className="font-medium">{userStats.daysActive} days</span>
+                      <span className={textMuted}>Active Days</span>
+                      <span className={`font-medium ${textColor}`}>{userStats.daysActive} days</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className={`w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-2 overflow-hidden`}>
                       <div 
                         className="bg-gradient-to-r from-purple-400 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out" 
                         style={{ width: `${Math.min(100, (userStats.daysActive / 7) * 100)}%` }}
@@ -1012,12 +1303,13 @@ const Profile = () => {
               </CardContent>
             </Card>
           </div>
+          )}
 
           {/* Achievements Section */}
           <div className="grid grid-cols-1 gap-6">
             {/* Recent Achievements */}
             <Card className={`${cardBg} rounded-2xl ${cardHoverEffect} animate-fade-in`} style={{ animationDelay: '450ms' }}>
-              <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
+              <CardHeader className={`flex flex-row items-center justify-between border-b ${theme === 'dark' ? 'border-gray-700/60' : 'border-gray-100'} pb-4`}>
                 <div>
                   <CardTitle className="flex items-center gap-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                     <Zap className="w-6 h-6 text-yellow-400" />
@@ -1042,8 +1334,8 @@ const Profile = () => {
                       <div className="p-6 space-y-6">
                         {/* Learning Milestones */}
                         <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-black">
-                            <Trophy className="w-5 h-5 text-black" />
+                          <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${textColor}`}>
+                            <Trophy className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
                             Learning Milestones
                           </h3>
                           <div className="space-y-3">
@@ -1066,14 +1358,14 @@ const Profile = () => {
                             ].map((award) => (
                               <div 
                                 key={award.title}
-                                className={`p-4 rounded-lg border ${award.condition ? 'border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'}`}
+                                className={`p-4 rounded-lg border ${award.condition ? theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100' : theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}
                               >
                                 <div className="flex justify-between items-center">
                                   <div>
-                                    <p className="font-medium">{award.title}</p>
-                                    <p className="text-sm text-muted-foreground">{award.description}</p>
+                                    <p className={`font-medium ${textColor}`}>{award.title}</p>
+                                    <p className={`text-sm ${textMuted}`}>{award.description}</p>
                                   </div>
-                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}>
+                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? theme === 'dark' ? 'bg-white text-black' : 'bg-black text-white' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-500'}>
                                     {award.condition ? 'Achieved' : 'Locked'}
                                   </Badge>
                                 </div>
@@ -1084,8 +1376,8 @@ const Profile = () => {
 
                         {/* Goal Achievements */}
                         <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-black">
-                            <CheckCircle className="w-5 h-5 text-black" />
+                          <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${textColor}`}>
+                            <CheckCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
                             Goal Achievements
                           </h3>
                           <div className="space-y-3">
@@ -1108,14 +1400,14 @@ const Profile = () => {
                             ].map((award) => (
                               <div 
                                 key={award.title}
-                                className={`p-4 rounded-lg border ${award.condition ? 'border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'}`}
+                                className={`p-4 rounded-lg border ${award.condition ? theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100' : theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}
                               >
                                 <div className="flex justify-between items-center">
                                   <div>
-                                    <p className="font-medium">{award.title}</p>
-                                    <p className="text-sm text-muted-foreground">{award.description}</p>
+                                    <p className={`font-medium ${textColor}`}>{award.title}</p>
+                                    <p className={`text-sm ${textMuted}`}>{award.description}</p>
                                   </div>
-                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}>
+                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? theme === 'dark' ? 'bg-white text-black' : 'bg-black text-white' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-500'}>
                                     {award.condition ? 'Achieved' : 'Locked'}
                                   </Badge>
                                 </div>
@@ -1126,8 +1418,8 @@ const Profile = () => {
 
                         {/* Consistency Awards */}
                         <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-black">
-                            <Calendar className="w-5 h-5 text-black" />
+                          <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${textColor}`}>
+                            <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
                             Consistency Awards
                           </h3>
                           <div className="space-y-3">
@@ -1150,14 +1442,14 @@ const Profile = () => {
                             ].map((award) => (
                               <div 
                                 key={award.title}
-                                className={`p-4 rounded-lg border ${award.condition ? 'border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'}`}
+                                className={`p-4 rounded-lg border ${award.condition ? theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100' : theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}
                               >
                                 <div className="flex justify-between items-center">
                                   <div>
-                                    <p className="font-medium">{award.title}</p>
-                                    <p className="text-sm text-muted-foreground">{award.description}</p>
+                                    <p className={`font-medium ${textColor}`}>{award.title}</p>
+                                    <p className={`text-sm ${textMuted}`}>{award.description}</p>
                                   </div>
-                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}>
+                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? theme === 'dark' ? 'bg-white text-black' : 'bg-black text-white' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-500'}>
                                     {award.condition ? 'Achieved' : 'Locked'}
                                   </Badge>
                                 </div>
@@ -1168,8 +1460,8 @@ const Profile = () => {
 
                         {/* Streak Achievements */}
                         <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-black">
-                            <Flame className="w-5 h-5 text-black" />
+                          <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${textColor}`}>
+                            <Flame className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
                             Streak Achievements
                           </h3>
                           <div className="space-y-3">
@@ -1192,14 +1484,14 @@ const Profile = () => {
                             ].map((award) => (
                               <div 
                                 key={award.title}
-                                className={`p-4 rounded-lg border ${award.condition ? 'border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'}`}
+                                className={`p-4 rounded-lg border ${award.condition ? theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100' : theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}
                               >
                                 <div className="flex justify-between items-center">
                                   <div>
-                                    <p className="font-medium">{award.title}</p>
-                                    <p className="text-sm text-muted-foreground">{award.description}</p>
+                                    <p className={`font-medium ${textColor}`}>{award.title}</p>
+                                    <p className={`text-sm ${textMuted}`}>{award.description}</p>
                                   </div>
-                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}>
+                                  <Badge variant={award.condition ? "default" : "secondary"} className={award.condition ? theme === 'dark' ? 'bg-white text-black' : 'bg-black text-white' : theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-500'}>
                                     {award.condition ? 'Achieved' : 'Locked'}
                                   </Badge>
                                 </div>
@@ -1215,116 +1507,164 @@ const Profile = () => {
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Learning Time Achievements */}
-                  <div className={`p-4 rounded-xl border ${userStats.hoursLearning >= 10 ? 'bg-gradient-to-br from-green-50 to-white border-green-100' : 'bg-gray-50 border-gray-100'} transition-all duration-300 hover:shadow-md`}>
+                  <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-md ${
+                    userStats.hoursLearning >= 10 
+                      ? theme === 'dark' ? 'bg-gradient-to-br from-green-900/20 to-gray-800 border-green-700/50' : 'bg-gradient-to-br from-green-50 to-white border-green-100'
+                      : theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-100'
+                  }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-lg ${userStats.hoursLearning >= 10 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`p-2.5 rounded-lg ${
+                          userStats.hoursLearning >= 10 
+                            ? theme === 'dark' ? 'bg-green-900/50 text-green-400' : 'bg-green-100 text-green-600'
+                            : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-400'
+                        }`}>
                           <Clock className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">Dedicated Learner</h4>
-                          <p className="text-sm text-gray-500">Complete 10+ hours</p>
+                          <h4 className={`font-medium ${textColor}`}>Dedicated Learner</h4>
+                          <p className={`text-sm ${textMuted}`}>Complete 10+ hours</p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${userStats.hoursLearning >= 10 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        userStats.hoursLearning >= 10 
+                          ? theme === 'dark' ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-800'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
                         {userStats.hoursLearning >= 10 ? 'Achieved' : 'In Progress'}
                       </div>
                     </div>
                     <div className="mt-3">
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <div 
                           className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all duration-700 ease-out" 
                           style={{ width: `${Math.min(100, (userStats.hoursLearning / 10) * 100)}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-right mt-1 text-gray-500">
+                      <p className={`text-xs text-right mt-1 ${textMuted}`}>
                         {Math.min(10, Math.round(userStats.hoursLearning * 10) / 10)}/10 hours
                       </p>
                     </div>
                   </div>
 
                   {/* Goals Achieved */}
-                  <div className={`p-4 rounded-xl border ${userStats.problemsSolved >= 5 ? 'bg-gradient-to-br from-blue-50 to-white border-blue-100' : 'bg-gray-50 border-gray-100'} transition-all duration-300 hover:shadow-md`}>
+                  <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-md ${
+                    userStats.problemsSolved >= 5 
+                      ? theme === 'dark' ? 'bg-gradient-to-br from-blue-900/20 to-gray-800 border-blue-700/50' : 'bg-gradient-to-br from-blue-50 to-white border-blue-100'
+                      : theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-100'
+                  }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-lg ${userStats.problemsSolved >= 5 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`p-2.5 rounded-lg ${
+                          userStats.problemsSolved >= 5 
+                            ? theme === 'dark' ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-100 text-blue-600'
+                            : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-400'
+                        }`}>
                           <Target className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">Goal Crusher</h4>
-                          <p className="text-sm text-gray-500">Complete 5+ goals</p>
+                          <h4 className={`font-medium ${textColor}`}>Goal Crusher</h4>
+                          <p className={`text-sm ${textMuted}`}>Complete 5+ goals</p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${userStats.problemsSolved >= 5 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        userStats.problemsSolved >= 5 
+                          ? theme === 'dark' ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
                         {userStats.problemsSolved >= 5 ? 'Achieved' : 'In Progress'}
                       </div>
                     </div>
                     <div className="mt-3">
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <div 
                           className="bg-gradient-to-r from-blue-400 to-sky-500 h-2 rounded-full transition-all duration-700 ease-out" 
                           style={{ width: `${Math.min(100, (userStats.problemsSolved / 5) * 100)}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-right mt-1 text-gray-500">
+                      <p className={`text-xs text-right mt-1 ${textMuted}`}>
                         {userStats.problemsSolved}/5 goals
                       </p>
                     </div>
                   </div>
 
                   {/* Streak Achievement */}
-                  <div className={`p-4 rounded-xl border ${userStats.currentStreak >= 7 ? 'bg-gradient-to-br from-orange-50 to-white border-orange-100' : 'bg-gray-50 border-gray-100'} transition-all duration-300 hover:shadow-md`}>
+                  <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-md ${
+                    userStats.currentStreak >= 7 
+                      ? theme === 'dark' ? 'bg-gradient-to-br from-orange-900/20 to-gray-800 border-orange-700/50' : 'bg-gradient-to-br from-orange-50 to-white border-orange-100'
+                      : theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-100'
+                  }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-lg ${userStats.currentStreak >= 7 ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`p-2.5 rounded-lg ${
+                          userStats.currentStreak >= 7 
+                            ? theme === 'dark' ? 'bg-orange-900/50 text-orange-400' : 'bg-orange-100 text-orange-600'
+                            : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-400'
+                        }`}>
                           <Flame className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">Streak Master</h4>
-                          <p className="text-sm text-gray-500">7+ day streak</p>
+                          <h4 className={`font-medium ${textColor}`}>Streak Master</h4>
+                          <p className={`text-sm ${textMuted}`}>7+ day streak</p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${userStats.currentStreak >= 7 ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        userStats.currentStreak >= 7 
+                          ? theme === 'dark' ? 'bg-orange-900/50 text-orange-300' : 'bg-orange-100 text-orange-800'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
                         {userStats.currentStreak >= 7 ? 'Achieved' : 'In Progress'}
                       </div>
                     </div>
                     <div className="mt-3">
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <div 
                           className="bg-gradient-to-r from-orange-400 to-amber-500 h-2 rounded-full transition-all duration-700 ease-out" 
                           style={{ width: `${Math.min(100, (userStats.currentStreak / 7) * 100)}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-right mt-1 text-gray-500">
+                      <p className={`text-xs text-right mt-1 ${textMuted}`}>
                         {userStats.currentStreak}/7 days
                       </p>
                     </div>
                   </div>
 
                   {/* Consistency Achievement */}
-                  <div className={`p-4 rounded-xl border ${userStats.daysActive >= 7 ? 'bg-gradient-to-br from-purple-50 to-white border-purple-100' : 'bg-gray-50 border-gray-100'} transition-all duration-300 hover:shadow-md`}>
+                  <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-md ${
+                    userStats.daysActive >= 7 
+                      ? theme === 'dark' ? 'bg-gradient-to-br from-purple-900/20 to-gray-800 border-purple-700/50' : 'bg-gradient-to-br from-purple-50 to-white border-purple-100'
+                      : theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-100'
+                  }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-lg ${userStats.daysActive >= 7 ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`p-2.5 rounded-lg ${
+                          userStats.daysActive >= 7 
+                            ? theme === 'dark' ? 'bg-purple-900/50 text-purple-400' : 'bg-purple-100 text-purple-600'
+                            : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-400'
+                        }`}>
                           <Calendar className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">Consistent Learner</h4>
-                          <p className="text-sm text-gray-500">7+ active days</p>
+                          <h4 className={`font-medium ${textColor}`}>Consistent Learner</h4>
+                          <p className={`text-sm ${textMuted}`}>7+ active days</p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${userStats.daysActive >= 7 ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        userStats.daysActive >= 7 
+                          ? theme === 'dark' ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
                         {userStats.daysActive >= 7 ? 'Achieved' : 'In Progress'}
                       </div>
                     </div>
                     <div className="mt-3">
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <div 
-                          className="bg-gradient-to-r from-purple-400 to-violet-500 h-2 rounded-full transition-all duration-700 ease-out" 
+                          className="bg-gradient-to-br from-purple-400 to-violet-500 h-2 rounded-full transition-all duration-700 ease-out" 
                           style={{ width: `${Math.min(100, (userStats.daysActive / 7) * 100)}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-right mt-1 text-gray-500">
+                      <p className={`text-xs text-right mt-1 ${textMuted}`}>
                         {userStats.daysActive}/7 days
                       </p>
                     </div>
@@ -1333,33 +1673,49 @@ const Profile = () => {
 
                 {/* Achievement Categories */}
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                      <Trophy className="w-5 h-5 text-blue-600" />
+                  <div className={`p-3 rounded-lg border text-center ${
+                    theme === 'dark' ? 'bg-blue-900/20 border-blue-700/50' : 'bg-blue-50 border-blue-100'
+                  }`}>
+                    <div className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      theme === 'dark' ? 'bg-blue-900/50' : 'bg-blue-100'
+                    }`}>
+                      <Trophy className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Learning</p>
-                    <p className="text-xs text-gray-500">Milestones</p>
+                    <p className={`text-sm font-medium ${textColor}`}>Learning</p>
+                    <p className={`text-xs ${textMuted}`}>Milestones</p>
                   </div>
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-100 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mb-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className={`p-3 rounded-lg border text-center ${
+                    theme === 'dark' ? 'bg-green-900/20 border-green-700/50' : 'bg-green-50 border-green-100'
+                  }`}>
+                    <div className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      theme === 'dark' ? 'bg-green-900/50' : 'bg-green-100'
+                    }`}>
+                      <CheckCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Goals</p>
-                    <p className="text-xs text-gray-500">Achieved</p>
+                    <p className={`text-sm font-medium ${textColor}`}>Goals</p>
+                    <p className={`text-xs ${textMuted}`}>Achieved</p>
                   </div>
-                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mb-2">
-                      <Flame className="w-5 h-5 text-amber-600" />
+                  <div className={`p-3 rounded-lg border text-center ${
+                    theme === 'dark' ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-100'
+                  }`}>
+                    <div className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      theme === 'dark' ? 'bg-amber-900/50' : 'bg-amber-100'
+                    }`}>
+                      <Flame className={`w-5 h-5 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`} />
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Streaks</p>
-                    <p className="text-xs text-gray-500">Maintained</p>
+                    <p className={`text-sm font-medium ${textColor}`}>Streaks</p>
+                    <p className={`text-xs ${textMuted}`}>Maintained</p>
                   </div>
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mb-2">
-                      <Calendar className="w-5 h-5 text-purple-600" />
+                  <div className={`p-3 rounded-lg border text-center ${
+                    theme === 'dark' ? 'bg-purple-900/20 border-purple-700/50' : 'bg-purple-50 border-purple-100'
+                  }`}>
+                    <div className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      theme === 'dark' ? 'bg-purple-900/50' : 'bg-purple-100'
+                    }`}>
+                      <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-400'}`} />
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Consistency</p>
-                    <p className="text-xs text-gray-500">Tracking</p>
+                    <p className={`text-sm font-medium ${textColor}`}>Consistency</p>
+                    <p className={`text-xs ${textMuted}`}>Tracking</p>
                   </div>
                 </div>
               </CardContent>

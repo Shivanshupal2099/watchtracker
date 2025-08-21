@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Upload, Users, Lightbulb, BookOpen, Trophy, ShieldCheck, UserCheck, MessageCircle, FileText, UserCircle, ArrowLeft, User, Globe, Code, Award, Settings, Clock, Filter, Search, ChevronDown, Plus, X, Check, RotateCcw, BarChart3, Smile, Play, Video, Tag, Rocket } from 'lucide-react';
+import { Upload, Users, Lightbulb, BookOpen, Trophy, ShieldCheck, UserCheck, MessageCircle, FileText, UserCircle, ArrowLeft, User, Globe, Code, Award, Settings, Clock, Filter, Search, ChevronDown, Plus, X, Check, RotateCcw, BarChart3, Smile, Play, Video, Tag, Rocket, Home, Library, School, CheckSquare, Sparkles } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -4912,6 +4912,56 @@ const BridgeLab: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Footer Navigation for BridgeLab */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center py-2 z-50 shadow-lg">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex flex-col items-center justify-center px-2 py-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <Home className="w-6 h-6" />
+          <span className="text-xs mt-1">Dashboard</span>
+        </button>
+        
+        <button
+          onClick={() => navigate('/library')}
+          className="flex flex-col items-center justify-center px-2 py-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <Library className="w-6 h-6" />
+          <span className="text-xs mt-1">Library</span>
+        </button>
+        
+        <button
+          onClick={() => navigate('/classroom')}
+          className="flex flex-col items-center justify-center px-2 py-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <School className="w-6 h-6" />
+          <span className="text-xs mt-1">Classroom</span>
+        </button>
+        
+        <button
+          className="flex flex-col items-center justify-center px-2 py-1 text-blue-600 dark:text-blue-400"
+        >
+          <img src={BridgeLabLogo} alt="BridgeLab" className="w-6 h-6" />
+          <span className="text-xs mt-1">BridgeLab</span>
+        </button>
+        
+        <button
+          onClick={() => navigate('/todo')}
+          className="flex flex-col items-center justify-center px-2 py-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <CheckSquare className="w-6 h-6" />
+          <span className="text-xs mt-1">To-Do</span>
+        </button>
+        
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex flex-col items-center justify-center px-2 py-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <User className="w-6 h-6" />
+          <span className="text-xs mt-1">Profile</span>
+        </button>
+      </nav>
     </div>
   );
 };

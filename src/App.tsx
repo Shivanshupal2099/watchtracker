@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider,SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route, useLocation, useParams, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -40,24 +40,23 @@ import { ArrowLeft } from "lucide-react";
 
 const queryClient = new QueryClient();
 
-function SidebarDoubleClickCloser({ children }: { children: React.ReactNode }) {
-  const { open, setOpen, openMobile, setOpenMobile } = useSidebar();
-  return (
-    <div
-      style={{ height: '100%' }}
-      onDoubleClick={() => {
-        setOpen(!open);
-        setOpenMobile(!openMobile);
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+
 
 const AppContent = () => {
   const location = useLocation();
   const isAuthPage = ['/', '/login', '/create-account', '/landing'].includes(location.pathname);
+  const isBridgeLabPage = location.pathname === '/bridgelab';
+
+
+
+  // Check if we're on mobile
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Load questions when the app starts
@@ -66,46 +65,76 @@ const AppContent = () => {
     });
   }, []);
 
+
+
   return (
-    <SidebarProvider>
+    <div className="min-h-screen flex w-full">
+
       
-      <div className="min-h-screen flex w-full">
-        {!isAuthPage && <AppSidebar />}
-        <main className={`flex-1 ${!isAuthPage ? '' : 'w-full'}`}>
-          <SidebarDoubleClickCloser>
-            <Routes>
-              <Route path="/" element={<Splash />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/create-account" element={<CreateAccount />} />
-              <Route path="/dashboard" element={<Index />} />
-              <Route path="/library" element={<Library />} />
-              <Route path="/classroom" element={<Classroom />} />
-              <Route path="/clubs" element={<Clubs />} />
-              <Route path="/todo" element={<Todo />} />
-              <Route path="/pomodoro" element={<Pomodoro />} />
-              <Route path="/premium" element={<Premium />} />
-              <Route path="/bridgelab" element={<BridgeLab />} />
-              <Route path="/launch" element={<Launch />} />
-              <Route path="/acceleratorlibrary" element={<AcceleratorLibrary />} />
-              <Route path="/view-create" element={<ViewCreate />} />
-              <Route path="/shorts" element={<Shorts />} />
-              <Route path="/landing" element={<LandingPage />} />
-              <Route path="/find-cofounder" element={<FindCoFounder />} />
-              <Route 
-                path="/playlist/:playlistId" 
-                element={<PlaylistDetailWrapper />} 
-              />
-              <Route path="/playlist/:playlistId/play" element={<VideoPlayer />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </SidebarDoubleClickCloser>
-        </main>
-      </div>
-    </SidebarProvider>
+      {/* Only render sidebar if not auth page and not BridgeLab page */}
+      {!isAuthPage && !isBridgeLabPage && <AppSidebar />}
+      <main
+        className={`flex-1 transition-all duration-300 ${
+          !isAuthPage
+            ? isBridgeLabPage
+              ? 'ml-0 pb-16' // No left margin on BridgeLab, add bottom padding for footer nav
+              : !isMobile
+              ? 'ml-24' // Sidebar is visible on desktop
+              : 'ml-0 pb-16' // No left margin on mobile, add bottom padding for footer nav
+            : 'w-full'
+        }`}
+      >
+        <Routes>
+            <Route path="/" element={<Splash />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/create-account" element={<CreateAccount />} />
+            <Route path="/dashboard" element={<Index />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/classroom" element={<Classroom />} />
+            <Route path="/clubs" element={<Clubs />} />
+            <Route path="/todo" element={<Todo />} />
+            <Route path="/pomodoro" element={<Pomodoro />} />
+            <Route path="/premium" element={<Premium />} />
+            <Route path="/bridgelab" element={<BridgeLab />} />
+            <Route path="/launch" element={<Launch />} />
+            <Route path="/acceleratorlibrary" element={<AcceleratorLibrary />} />
+            <Route path="/view-create" element={<ViewCreate />} />
+            <Route path="/shorts" element={<Shorts />} />
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/find-cofounder" element={<FindCoFounder />} />
+            <Route 
+              path="/playlist/:playlistId" 
+              element={<PlaylistDetailWrapper />} 
+            />
+            <Route path="/playlist/:playlistId/play" element={<VideoPlayer />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+      </main>
+    </div>
   );
 };
+
+const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <PlaylistProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Router>
+            <SidebarProvider>
+              <AppContent />
+            </SidebarProvider>
+          </Router>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </PlaylistProvider>
+  </ThemeProvider>
+);
+
+export default App;
 
 // New component to handle playlist type routing
 const PlaylistDetailWrapper = () => {
@@ -189,21 +218,3 @@ const PlaylistDetailWrapper = () => {
   console.log('PlaylistDetailWrapper: Rendering component for playlist type:', playlistType);
   return playlistType === 'coding' ? <PlaylistDetailCoding /> : <PlaylistDetail />;
 };
-
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-    <PlaylistProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Router>
-            <AppContent />
-          </Router>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </PlaylistProvider>
-  </ThemeProvider>
-);
-
-export default App;

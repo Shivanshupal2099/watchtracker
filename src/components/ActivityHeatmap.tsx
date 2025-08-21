@@ -317,27 +317,35 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ playlists }) => {
 
     return (
       <TooltipProvider>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {renderControls()}
-          <div className={`flex items-start p-4 ${bgColor} rounded-lg border ${borderColor} shadow-sm`}>
-            <div className="flex space-x-1 overflow-x-auto pb-2">
+          <div
+            className={`flex items-start p-4 ${bgColor} rounded-lg border ${borderColor} shadow-sm`}
+            style={{
+              width: "100%",
+              maxWidth: "100vw",
+              overflowX: "auto",
+              minWidth: "320px",
+            }}
+          >
+            <div className="flex space-x-2 overflow-x-auto pb-2 w-full">
               {weeks.map((week, weekIndex) => (
-                <div 
-                  key={weekIndex} 
-                  className={`flex flex-col space-y-1 ${week.length === 0 ? 'w-3' : ''}`}
+                <div
+                  key={weekIndex}
+                  className={`flex flex-col space-y-2 ${week.length === 0 ? 'w-5' : ''}`}
                 >
                   {week.map((day, dayIndex) => {
                     const dateString = format(day, 'yyyy-MM-dd');
                     const activity = activityData[dateString];
                     const isToday = isSameDay(day, new Date());
                     const isOutsideRange = viewMode === 'month' && selectedMonth !== null && !isSameMonth(day, new Date(displayYear, selectedMonth, 1)) ||
-                                         viewMode === 'week' && selectedWeek !== null && getWeek(day, { weekStartsOn: 0 }) !== selectedWeek;
+                      viewMode === 'week' && selectedWeek !== null && getWeek(day, { weekStartsOn: 0 }) !== selectedWeek;
 
                     if (isOutsideRange) {
                       return (
-                        <div 
-                          key={dayIndex} 
-                          className={`w-3 h-3 rounded-sm ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'} border`}
+                        <div
+                          key={dayIndex}
+                          className={`w-6 h-6 sm:w-5 sm:h-5 rounded-sm ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'} border`}
                         />
                       );
                     }
@@ -346,9 +354,22 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ playlists }) => {
                       <Tooltip key={dayIndex}>
                         <TooltipTrigger>
                           <div
-                            className={`w-3 h-3 rounded-sm transition-colors duration-200 ${getColor(dateString)} 
+                            className={`w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center rounded-sm transition-colors duration-200 ${getColor(dateString)} 
                               ${isToday ? `ring-2 ${isDark ? 'ring-emerald-500' : 'ring-blue-500'} ring-offset-2 ${isDark ? 'ring-offset-gray-800' : 'ring-offset-white'}` : ''}`}
-                          />
+                          >
+                            {activity && (
+                              <>
+                                {activity.learningTime > 0 && (
+                                  <span className="text-[10px] font-bold text-white drop-shadow">
+                                    {activity.learningTime}
+                                  </span>
+                                )}
+                                {activity.problemSolved && (
+                                  <Icons.CheckCircle className="w-3 h-3 text-white absolute bottom-0 right-0" />
+                                )}
+                              </>
+                            )}
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent className={`${tooltipBg} border ${tooltipBorder} shadow-lg`}>
                           <p className={`font-medium ${tooltipText}`}>{format(new Date(dateString), 'MMMM d, yyyy')}</p>
@@ -420,4 +441,4 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ playlists }) => {
   );
 };
 
-export default ActivityHeatmap; 
+export default ActivityHeatmap;

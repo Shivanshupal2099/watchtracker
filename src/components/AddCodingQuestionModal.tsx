@@ -95,10 +95,10 @@ const AddCodingQuestionModal = ({ isOpen, onClose, onAdd }: AddCodingQuestionMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-y-auto p-2 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <Code className="w-6 h-6" />
+          <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <Code className="w-5 h-5 sm:w-6 sm:h-6" />
             Add Coding Question
           </DialogTitle>
         </DialogHeader>
@@ -127,7 +127,7 @@ const AddCodingQuestionModal = ({ isOpen, onClose, onAdd }: AddCodingQuestionMod
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="difficulty">Difficulty</Label>
                 <Select value={difficulty} onValueChange={(value: 'easy' | 'medium' | 'hard') => setDifficulty(value)}>
@@ -164,14 +164,14 @@ const AddCodingQuestionModal = ({ isOpen, onClose, onAdd }: AddCodingQuestionMod
             </div>
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
+            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={isLoading || !title.trim() || !url.trim()}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               {isLoading ? (
                 <>

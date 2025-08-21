@@ -29,6 +29,29 @@ const Library = () => {
   const { playlists, addPlaylist, deletePlaylist } = usePlaylists();
   const { theme } = useTheme();
 
+  // Add CSS to ensure proper scrolling
+  useEffect(() => {
+    // Ensure body and html can scroll
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    
+    // Force scrolling to work
+    document.body.style.position = 'relative';
+    document.body.style.minHeight = '100vh';
+    
+    return () => {
+      // Reset styles when component unmounts
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.body.style.position = '';
+      document.body.style.minHeight = '';
+    };
+  }, []);
+
   // Add refresh functionality
   const refreshPlaylists = () => {
     const savedPlaylists = localStorage.getItem('youtubePlaylists');
@@ -214,11 +237,11 @@ const Library = () => {
               : 'bg-gradient-to-br from-slate-50/95 via-blue-50/95 to-indigo-100/95'
           }`}></div>
         </div>
-      <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
+        <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
         <div className="flex flex-col">
           {playlists.length > 0 && (
-            <div className="flex flex-col">
-              <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1">
                 <div className="flex flex-col items-center w-full mb-8">
                   <div className="w-full max-w-4xl mx-auto flex items-center justify-center gap-3 transition-all duration-300">
                     <div className="relative group flex-1">
@@ -475,7 +498,7 @@ const Library = () => {
           onClose={() => setIsModalOpen(false)}
           onAdd={addPlaylist}
         />
-      </div>
+        </div>
       </div>
     </>
   );

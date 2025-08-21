@@ -85,7 +85,7 @@ const Achievements = ({
   ];
 
   return (
-    <Card className="transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+    <Card className="transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 w-full max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="h-5 w-5" />
@@ -93,7 +93,7 @@ const Achievements = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {achievements.map((achievement, index) => (
             <motion.div
               key={achievement.id}
@@ -150,4 +150,4 @@ const Achievements = ({
   );
 };
 
-export default Achievements; 
+export default Achievements;

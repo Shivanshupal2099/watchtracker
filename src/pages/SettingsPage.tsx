@@ -18,6 +18,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 // Add interfaces for data management
 interface ParsedTodo {
@@ -88,6 +90,9 @@ export function SettingsPage() {
   });
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [selectedCountry, setSelectedCountry] = useState('India');
+
+  const { theme, setTheme } = useTheme();
+  const darkMode = theme === "dark";
 
   const resetAllData = () => {
     localStorage.removeItem('youtubePlaylists');
@@ -277,7 +282,6 @@ export function SettingsPage() {
                   ))}
                 </select>
               </div>
-
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Icons.Clock className="w-4 h-4" />
@@ -297,7 +301,35 @@ export function SettingsPage() {
                 </Select>
               </div>
 
+              {/* Theme Section */}
               <Separator className="my-6" />
+              <section>
+                <h2 className="text-lg font-semibold mb-4">Theme</h2>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                      !darkMode
+                        ? "bg-blue-100 text-blue-900 border-blue-400"
+                        : "bg-gray-200 text-gray-800 border-gray-300 hover:bg-blue-50"
+                    }`}
+                  >
+                    <Sun className="w-5 h-5" />
+                    Light
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                      darkMode
+                        ? "bg-zinc-800 text-white border-zinc-600"
+                        : "bg-gray-200 text-gray-800 border-gray-300 hover:bg-zinc-900 hover:text-white"
+                    }`}
+                  >
+                    <Moon className="w-5 h-5" />
+                    Dark
+                  </button>
+                </div>
+              </section>
 
               <div className="space-y-6">
                 <div className="space-y-2">
@@ -929,4 +961,4 @@ export function SettingsPage() {
       </Tabs>
     </div>
   );
-} 
+}
