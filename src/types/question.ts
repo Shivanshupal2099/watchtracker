@@ -125,9 +125,11 @@ export interface Playlist {
   id: string;
   title: string;
   description: string;
-  thumbnailUrl?: string;
-  videoCount?: number;
+  type: 'video' | 'coding' | 'audiobook';
+  thumbnail?: string;
+  videos: any[];
   codingQuestions: Question[];
+  audiobooks?: any[];
   lastUpdated?: string;
   progress?: number;
   completedVideos?: string[];
@@ -139,6 +141,5 @@ export interface Playlist {
     weeklyGoal: number;
     completedThisWeek: number;
   };
-  type: 'video' | 'coding';
   createdAt: string;
 } 

@@ -8,6 +8,7 @@ import AddPlaylistModal from '@/components/AddPlaylistModal';
 import { useTheme } from 'next-themes';
 import { usePlaylists } from '@/context/PlaylistContext';
 import { Playlist } from '@/types/playlist';
+import Head from 'next/head';
 
 interface WatchTimeData {
   totalWatchTime: number;  // Total accumulated watch time in milliseconds
@@ -157,6 +158,7 @@ const Library = () => {
     );
   const videoPlaylists = filteredPlaylists.filter(playlist => playlist.type === 'video');
   const codingPlaylists = filteredPlaylists.filter(playlist => playlist.type === 'coding');
+  const audiobookPlaylists = filteredPlaylists.filter(playlist => playlist.type === 'audiobook');
 
   // 1. Add a new filtered list for completed playlists
   const completedPlaylists = filteredPlaylists.filter(playlist => {
@@ -166,11 +168,15 @@ const Library = () => {
     if (playlist.type === 'coding') {
       return playlist.codingQuestions && playlist.codingQuestions.length > 0 && playlist.codingQuestions.every(q => q.solved);
     }
+    if (playlist.type === 'audiobook') {
+      return playlist.audiobooks && playlist.audiobooks.length > 0 && playlist.audiobooks.every(a => a.progress >= 100);
+    }
     return false;
   });
 
   return (
     <>
+<<<<<<< HEAD
       <style jsx>{`
         html, body {
           overflow: auto !important;
@@ -194,6 +200,71 @@ const Library = () => {
       
       <div className="container mx-auto px-4 relative z-10 pt-12 pb-8" style={{ minHeight: '100vh', height: 'auto' }}>
         <div className="flex flex-col" style={{ minHeight: '100vh' }}>
+=======
+      <style jsx global>{`
+        @keyframes perspective {
+          0% { perspective: 100px; }
+          50% { perspective: 500px; }
+          100% { perspective: 100px; }
+        }
+        .container-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          transform-style: preserve-3d;
+          overflow: hidden;
+          transform: translateX(0%);
+          animation: perspective 10s ease-in-out infinite;
+          z-index: -1;
+          pointer-events: none;
+        }
+        .container-loader,
+        .loader {
+          height: 100%;
+          width: 100%;
+        }
+        .loader {
+          --color-light: rgba(99, 102, 241, 0.4);
+          --color-dark: rgba(99, 102, 241, 0.2);
+          --color: ${theme === 'dark' ? 'var(--color-dark)' : 'var(--color-light)'};
+          --bg-light: rgba(255, 255, 255, 0.9);
+          --bg-dark: rgba(15, 23, 42, 0.9);
+          position: absolute;
+          background-color: ${theme === 'dark' ? 'var(--bg-dark)' : 'var(--bg-light)'};
+          background-image: 
+            repeating-linear-gradient(transparent 0 40px, var(--color) 41px 42px),
+            repeating-linear-gradient(90deg, transparent 0 40px, var(--color) 41px 42px);
+          transform: rotateX(60deg) rotateZ(45deg) scale(1.2);
+          top: 0;
+          left: 0;
+          opacity: ${theme === 'dark' ? '0.9' : '0.7'};
+          width: 200%;
+          height: 200%;
+          background-size: 80px 80px;
+        }
+        @media (max-width: 768px) {
+          .loader {
+            background-size: 60px 60px;
+          }
+        }
+      `}</style>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* 3D Grid Loader Background */}
+        <div className="fixed inset-0 z-0">
+          <div className="container-loader">
+            <div className="loader"></div>
+          </div>
+          <div className={`absolute inset-0 ${
+            theme === 'dark' 
+              ? 'bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-indigo-950/95' 
+              : 'bg-gradient-to-br from-slate-50/95 via-blue-50/95 to-indigo-100/95'
+          }`}></div>
+        </div>
+      <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
+        <div className="flex flex-col">
+>>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
           {playlists.length > 0 && (
             <div className="flex flex-col flex-1">
               <div className="flex flex-col flex-1">
@@ -326,6 +397,16 @@ const Library = () => {
                         <span className="absolute inset-0 bg-gradient-to-r from-purple-500 to-fuchsia-600 rounded-lg opacity-0 group-data-[state=active]:opacity-100 transition-all duration-300 -z-10 scale-95 group-hover:opacity-10 group-data-[state=active]:scale-100" />
                       </TabsTrigger>
                       <TabsTrigger 
+                        value="audiobooks"
+                        className="relative flex-1 px-6 py-3 text-base font-medium transition-all duration-300 ease-out rounded-lg group"
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 group-data-[state=active]:opacity-100 opacity-0 transition-opacity"></span>
+                          <span>Audiobooks</span>
+                        </span>
+                        <span className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg opacity-0 group-data-[state=active]:opacity-100 transition-all duration-300 -z-10 scale-95 group-hover:opacity-10 group-data-[state=active]:scale-100" />
+                      </TabsTrigger>
+                      <TabsTrigger 
                         value="complete"
                         className="relative flex-1 px-6 py-3 text-base font-medium transition-all duration-300 ease-out rounded-lg group"
                       >
@@ -373,6 +454,23 @@ const Library = () => {
                             />
                           </div>
                         ))}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="audiobooks" className="mt-6 animate-fade-in-up">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full px-4">
+                        {audiobookPlaylists.length > 0 ? (
+                          audiobookPlaylists.map((playlist, index) => (
+                            <div key={playlist.id} className="w-full transform hover:scale-[1.02] transition-transform duration-300 animate-fade-in-up" style={{animationDelay: `${index * 30}ms`}}>
+                              <PlaylistCard
+                                playlist={playlist}
+                                onDelete={deletePlaylist}
+                                delay={index * 30}
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-500 py-12 col-span-3">No audiobook playlists found. Create one to get started!</div>
+                        )}
                       </div>
                     </TabsContent>
                     <TabsContent value="complete" className="mt-6 animate-fade-in-up">
@@ -427,9 +525,13 @@ const Library = () => {
           onAdd={addPlaylist}
         />
       </div>
+<<<<<<< HEAD
     </div>
+=======
+      </div>
+>>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
     </>
   );
 };
 
-export default Library; 
+export default Library;

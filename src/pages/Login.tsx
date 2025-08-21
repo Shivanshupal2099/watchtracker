@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Loader2, Mail, Lock, Github, Twitter } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import logo from '../assets/univoralab.png';
 
 export default function Login() {
   const navigate = useNavigate();

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Clock, Target, TrendingUp, Play, Code, Share2, ThumbsUp, ThumbsDown, MessageCircle, Bookmark, Eye, Heart, MessageSquare, Share, BookmarkCheck, TrendingDown, ArrowUp, ArrowDown, Calendar, BarChart, Flame, Info } from 'lucide-react';
+import { X, Flame, Clock, Target, TrendingUp, Play, Code, Share2, ThumbsUp, ThumbsDown, MessageCircle, Bookmark, Eye, Heart, MessageSquare, Share, BookmarkCheck, TrendingDown, ArrowUp, ArrowDown, Calendar, BarChart, Info, Lock } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StatsCard from '@/components/StatsCard';
@@ -8,7 +9,6 @@ import { BarChart as ReBarChart, Bar as ReBar, XAxis as ReXAxis, YAxis as ReYAxi
 import NewProgressTabs from '@/components/NewProgressTabs';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from 'sonner';
 import ActivityHeatmap from '@/components/ActivityHeatmap';
@@ -49,6 +49,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [inviteCount, setInviteCount] = useState(0);
+  const requiredInvites = 2;
   const [stats, setStats] = useState<PlaylistData>({
     totalWatchTime: 0,
     totalVideos: 0,
@@ -169,6 +172,16 @@ const Index = () => {
     };
 
     loadData();
+
+    // Check if user has completed required invites
+    const savedInvites = localStorage.getItem('inviteCount');
+    const currentInvites = savedInvites ? parseInt(savedInvites, 10) : 0;
+    setInviteCount(currentInvites);
+    
+    // Show popup if not enough invites
+    if (currentInvites < 2) {
+      setShowWelcomePopup(true);
+    }
 
     // Add event listener for storage changes
     const handleStorageChange = (e: StorageEvent) => {
@@ -484,6 +497,52 @@ const Index = () => {
     }));
   }
 
+  const handleSkipWelcome = () => {
+    setShowWelcomePopup(false);
+    localStorage.setItem('hasSeenWelcomePopup', 'true');
+  };
+
+  const [copiedLinks, setCopiedLinks] = useState<number[]>([]);
+  const [showCopiedTooltip, setShowCopiedTooltip] = useState<number | null>(null);
+
+  // Generate unique invite links for each step
+  const inviteLinks = [
+    `${window.location.origin}?ref=${btoa('invite1-' + (localStorage.getItem('userId') || 'user'))}`,
+    `${window.location.origin}?ref=${btoa('invite2-' + (localStorage.getItem('userId') || 'user'))}`
+  ];
+
+  const handleCopyLink = async (linkIndex: number) => {
+    try {
+      await navigator.clipboard.writeText(inviteLinks[linkIndex]);
+      
+      // Mark this link as copied
+      const newCopiedLinks = [...new Set([...copiedLinks, linkIndex])];
+      setCopiedLinks(newCopiedLinks);
+      
+      // Update invite count if this is a new copy
+      if (!copiedLinks.includes(linkIndex)) {
+        const newCount = Math.min(inviteCount + 1, 2);
+        setInviteCount(newCount);
+        localStorage.setItem('inviteCount', newCount.toString());
+        
+        if (newCount >= 2) {
+          toast.success('🎉 Dashboard unlocked! Enjoy your full access!');
+          setTimeout(() => setShowWelcomePopup(false), 1500);
+        } else {
+          toast.success('Link copied! Now share it with a friend!');
+        }
+      }
+      
+      // Show tooltip for 2 seconds
+      setShowCopiedTooltip(linkIndex);
+      setTimeout(() => setShowCopiedTooltip(null), 2000);
+      
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast.error('Failed to copy link. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
@@ -499,8 +558,196 @@ const Index = () => {
     );
   }
 
+  // Lock the main content if not enough invites
+  const isLocked = inviteCount < 2;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-200 relative">
+      {/* Overlay and popup */}
+      {isLocked && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 relative">
+            <button 
+              onClick={handleSkipWelcome}
+              className={`absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ${inviteCount < 2 ? 'hidden' : ''}`}
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 relative shadow-lg">
+                <div className="absolute -top-3 -right-3 bg-gradient-to-br from-amber-400 to-amber-600 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-md border-2 border-white dark:border-slate-800">
+                  {inviteCount}/2
+                </div>
+                {inviteCount >= 2 ? (
+                  <div className="text-4xl">🎉</div>
+                ) : (
+                  <Lock className="w-12 h-12 text-white" />
+                )}
+              </div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+                {inviteCount >= 2 ? '🎉 Dashboard Unlocked!' : '🔒 Unlock Your Dashboard'}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 mb-6 px-2">
+                {inviteCount >= 2 
+                  ? 'Thanks for inviting your friends! Enjoy your full dashboard access.'
+                  : 'Share your invite link to unlock all features and earn rewards!'}
+              </p>
+              
+              {/* Progress Bar with Glow Effect */}
+              <div className="relative w-full h-3 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden mb-6 mx-auto max-w-xs">
+                <div 
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-1000 ease-out"
+                  style={{ width: `${(inviteCount / 2) * 100}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 opacity-30 animate-pulse"></div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {inviteCount}/2 invites completed
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {/* Invite Section */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800/50 dark:to-slate-800/30 p-5 rounded-xl border border-blue-100 dark:border-slate-700">
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2 text-lg">
+                    <Share2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    🎉 Double the Friends, Double the Fun!
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                    We've made two personal invite links just for you. Share both with your friends — and we'll know it's YOU who brought them!
+                  </p>
+                  
+                  {/* Step 1 */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-medium">
+                        1
+                      </div>
+                      <h5 className="font-medium text-slate-800 dark:text-slate-200">Copy Link 1 → Send to your first friend</h5>
+                    </div>
+                    <div className="flex items-center gap-2 pl-9">
+                      <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 truncate">
+                        {inviteLinks[0]}
+                      </div>
+                      <Tooltip open={showCopiedTooltip === 0}>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            onClick={() => handleCopyLink(0)}
+                            size="sm"
+                            className={`shrink-0 ${copiedLinks.includes(0) ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                          >
+                            {copiedLinks.includes(0) ? '✓ Copied!' : '📋 Copy Link 1'}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-green-500 text-white border-0">
+                          {copiedLinks.length === 0 
+                            ? 'Great! Now send this to your first friend!'
+                            : 'Link 1 copied! Send it to a friend!'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                  
+                  {/* Step 2 */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-medium ${
+                        copiedLinks.length > 0 
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' 
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                      }`}>
+                        2
+                      </div>
+                      <h5 className={`font-medium ${
+                        copiedLinks.length > 0 
+                          ? 'text-slate-800 dark:text-slate-200' 
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}>
+                        {copiedLinks.length > 0 
+                          ? 'Copy Link 2 → Send to your second friend'
+                          : 'Complete Step 1 to unlock Link 2'}
+                      </h5>
+                    </div>
+                    {copiedLinks.length > 0 && (
+                      <div className="flex items-center gap-2 pl-9">
+                        <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 truncate">
+                          {inviteLinks[1]}
+                        </div>
+                        <Tooltip open={showCopiedTooltip === 1}>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              onClick={() => handleCopyLink(1)}
+                              size="sm"
+                              className={`shrink-0 ${copiedLinks.includes(1) ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                              disabled={copiedLinks.length === 0}
+                            >
+                              {copiedLinks.includes(1) ? '✓ Copied!' : '📋 Copy Link 2'}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-green-500 text-white border-0">
+                            {copiedLinks.length === 1 
+                              ? 'One more to go! Share with another friend!'
+                              : 'Link 2 copied! Thanks for sharing!'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Rewards Info */}
+                  <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                          <Info className="w-3 h-3" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-800 dark:text-slate-200 mb-2">🎁 Earn Rewards!</p>
+                        <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5">
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <span>Each link is unique to track your invites</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <span>Get 100 bonus coins per friend who joins</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <span>Unlock exclusive badges and achievements</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                  {inviteCount < 2 && (
+                    <Button 
+                      onClick={handleSkipWelcome}
+                      variant="outline" 
+                      className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      Remind me later
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => setShowWelcomePopup(false)}
+                    className={`${inviteCount >= 2 ? 'w-full' : ''} bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20`}
+                  >
+                    {inviteCount >= 2 ? 'Start Exploring' : 'Continue to Dashboard'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-6 py-8">
         {/* Responsive row: Heatmap (left, wider) and Active Day Card (right) at the very top */}
         <div className="flex flex-col md:flex-row gap-6 mb-8 w-full">

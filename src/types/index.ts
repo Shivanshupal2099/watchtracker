@@ -1,8 +1,17 @@
 export interface Playlist {
   id: string;
   title: string;
-  description?: string;
+  description: string;
+  type: 'video' | 'coding' | 'audiobook';
+  thumbnail?: string;
+  videos: any[];
   codingQuestions: Question[];
+  audiobooks?: any[];
+  createdAt: string;
+  source?: string;
+  targetQuestionsPerDay?: number;
+  isPublic?: boolean;
+  ownerId?: string;
 }
 
 export interface Question {
