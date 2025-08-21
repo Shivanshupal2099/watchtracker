@@ -1,13 +1,10 @@
 import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import bridgelabLogo from '../assets/bridgelab_logo.png';
-=======
+import { motion } from 'framer-motion';
 import univoraLogo from '../assets/univora.png';
 import univoralabLogo from '../assets/univoralab.png';
 // Logos are now available as univoraLogo and univoralabLogo
->>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -81,6 +79,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const [activeHover, setActiveHover] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -129,13 +128,12 @@ export function AppSidebar() {
           "w-24"
         )}
       >
-<<<<<<< HEAD
-
-
-        <SidebarContent className="flex-1 flex flex-col items-center justify-between py-6 px-2">
-=======
         {/* Minimalist Logo Header */}
-        <SidebarHeader className="relative flex items-center justify-center h-28 px-2">
+        <SidebarHeader 
+          className="relative flex items-center justify-center h-28 px-2"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <motion.div 
             className="group/logo relative"
             whileHover={{ 
@@ -212,7 +210,6 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent className="flex-1 flex flex-col items-center py-4 space-y-2 px-2">
->>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
           {menuItems.map((item) => (
             <SidebarMenu key={item.title} className="w-full">
               <SidebarMenuItem>

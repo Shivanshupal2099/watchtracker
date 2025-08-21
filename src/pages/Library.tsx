@@ -176,31 +176,6 @@ const Library = () => {
 
   return (
     <>
-<<<<<<< HEAD
-      <style jsx>{`
-        html, body {
-          overflow: auto !important;
-          height: auto !important;
-          min-height: 100vh !important;
-        }
-        .library-page {
-          overflow-y: auto !important;
-          min-height: 100vh !important;
-          height: auto !important;
-        }
-      `}</style>
-      <div className={`library-page min-h-screen transition-colors duration-300 relative overflow-x-hidden overflow-y-auto ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950' 
-          : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-      }`} style={{ minHeight: '100vh', height: 'auto' }}>
-      {/* Decorative background shapes */}
-      <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-gradient-to-br from-blue-400/20 to-purple-400/10 rounded-full blur-3xl z-0" />
-      <div className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-gradient-to-tr from-indigo-300/20 to-pink-300/10 rounded-full blur-2xl z-0" />
-      
-      <div className="container mx-auto px-4 relative z-10 pt-12 pb-8" style={{ minHeight: '100vh', height: 'auto' }}>
-        <div className="flex flex-col" style={{ minHeight: '100vh' }}>
-=======
       <style jsx global>{`
         @keyframes perspective {
           0% { perspective: 100px; }
@@ -262,9 +237,8 @@ const Library = () => {
               : 'bg-gradient-to-br from-slate-50/95 via-blue-50/95 to-indigo-100/95'
           }`}></div>
         </div>
-      <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
+        <div className="container mx-auto px-4 relative z-10 pt-16 pb-12">
         <div className="flex flex-col">
->>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
           {playlists.length > 0 && (
             <div className="flex flex-col flex-1">
               <div className="flex flex-col flex-1">
@@ -524,12 +498,8 @@ const Library = () => {
           onClose={() => setIsModalOpen(false)}
           onAdd={addPlaylist}
         />
+        </div>
       </div>
-<<<<<<< HEAD
-    </div>
-=======
-      </div>
->>>>>>> 6d8b3b158afab72ad3e68843d1c0f38eae80cd67
     </>
   );
 };
