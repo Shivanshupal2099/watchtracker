@@ -21,6 +21,8 @@ import React from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import celebrationLogo from '@/assets/bridgelab_logo.png';
+import quizIcon from '@/assets/quiz.png';
+
 
 // Update the YouTube API types at the top of the file
 interface YouTubePlayer {
@@ -123,6 +125,17 @@ declare global {
   }
 }
 
+interface WatchSession {
+  id: string;             // Unique session ID
+  startTime: number;      // Timestamp when session started
+  endTime?: number;       // Timestamp when session ended
+  activeTime: number;     // Active watching time in ms
+  breakTime: number;      // Time spent in breaks during this session
+  videoId: string;        // ID of the video being watched
+  videoTitle: string;     // Title of the video
+  playlistId: string;     // ID of the playlist
+}
+
 interface WatchTimeData {
   totalWatchTime: number;  // Total accumulated watch time in milliseconds
   lastPosition: number;    // Last video position in seconds
@@ -130,6 +143,11 @@ interface WatchTimeData {
   playCount: number;       // Number of times video was played
   stopCount: number;       // Number of times video was stopped
   cumulativeTime: number;  // Total time spent watching the video
+  currentSessionId?: string; // ID of current active session
+  sessions: WatchSession[];  // History of all sessions
+  totalSessionTime: number;  // Total time across all sessions (active + breaks)
+  totalBreakTime: number;    // Total time spent in breaks
+  lastBreakStart?: number;   // Timestamp when current break started
 }
 
 interface CompletedVideo {
@@ -210,33 +228,35 @@ const formatTime = (seconds: number) => {
 const styles = `
 /* AI Chat Dialog */
 .ai-chat-dialog {
-  max-height: 70vh !important;
-  height: 600px !important;
+  max-height: 75vh !important;
+  height: 650px !important;
   --primary-color: #6366f1;
   --primary-hover: #4f46e5;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --border-color: #e5e7eb;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --bg-secondary: #f8fafc;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
-  --transition: all 0.2s ease-in-out;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Dark mode variables */
 .dark .ai-chat-dialog {
   --primary-color: #818cf8;
-  --primary-hover: #6366f1;
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --border-color: #374151;
+  --primary-hove: #6366f1;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --border-color: #334155;
+  --primary-gradient: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
 }
 
 /* Chat Container */
@@ -249,6 +269,14 @@ const styles = `
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   transition: var(--transition);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.dark .chat-container {
+  background-color: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
 }
 
 /* Chat Header */
@@ -257,8 +285,21 @@ const styles = `
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--primary-gradient);
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.chat-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
 }
 
 .status-section {
@@ -319,29 +360,36 @@ const styles = `
 /* Input Section */
 .input-section {
   position: relative;
-  padding: 0.75rem 1rem 1rem;
+  padding: 1.25rem;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-color);
-  position: sticky;
-  bottom: 0;
-  background: var(--bg-primary);
-  z-index: 10;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
 }
 
+.dark .input-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+/* Main Input */
 .main-input {
   width: 100%;
   min-height: 60px;
-  max-height: 120px;
-  padding: 1rem;
+  max-height: 150px;
+  padding: 0.875rem 3.5rem 0.875rem 1.25rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 1.5rem;
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.9375rem;
   line-height: 1.5;
   resize: none;
   transition: var(--transition);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
 }
 
 .main-input:focus {
@@ -350,84 +398,42 @@ const styles = `
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
-.main-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.7;
-}
-
-/* Controls Section */
-.controls-section {
-  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-  background: var(--bg-primary);
-  position: sticky;
-  bottom: 0;
-  background: var(--bg-primary);
-  z-index: 10;
-  border-top: 1px solid var(--border-color);
-}
-
-.controls-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.left-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.control-btn {
+/* Send Button */
+.send-button {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  background: var(--primary-color);
+  background-image: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
   cursor: pointer;
-  position: relative;
-  transition: var(--transition);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+  transform: scale(1);
 }
 
-.control-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--primary-color);
+.send-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
-.control-btn .btn-icon {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2;
+.send-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
 }
 
-.tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background: #1f2937;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
-  pointer-events: none;
-  box-shadow: var(--shadow-md);
-  z-index: 50;
-}
-
-.control-btn:hover .tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(-12px);
+.send-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Chat Messages Container */
@@ -450,15 +456,18 @@ const styles = `
 /* Message Bubbles */
 .message-bubble {
   max-width: 85%;
-  padding: 0.875rem 1.125rem;
+  padding: 0.75rem 1rem;
   border-radius: 1.125rem;
-  line-height: 1.4;
+  line-height: 1.5;
   position: relative;
-  animation: messageAppear 0.25s ease-out;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  animation: messageAppear 0.3s cubic-bezier(0.2, 0, 0.1, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   word-wrap: break-word;
-  font-size: 0.95rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.9375rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  backdrop-filter: blur(4px);
+  margin: 0.25rem 0;
 }
 
 .message-bubble:hover {
@@ -469,46 +478,34 @@ const styles = `
 /* User Message */
 .message-user {
   align-self: flex-end;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: var(--primary-gradient);
   color: white;
-  border-bottom-right-radius: 0.25rem;
+  border-radius: 1.125rem 0.25rem 1.125rem 1.125rem;
   margin-left: auto;
-  border-top-right-radius: 0.25rem;
+  margin-right: 0.5rem;
+  border: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 /* AI Message */
 .message-ai {
   align-self: flex-start;
-  background: white;
-  color: #1f2937;
-  border-bottom-left-radius: 0.25rem;
-  border: 1px solid #e5e7eb;
-  border-top-left-radius: 0.25rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 0.25rem 1.125rem 1.125rem 1.125rem;
+  margin-left: 0.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
 }
 
 .dark .message-ai {
   background: #1f2937;
   color: #f9fafb;
-  border-color: #374151;
-}
-
-/* Message Timestamp */
-.message-timestamp {
-  display: block;
-  font-size: 0.6875rem;
-  opacity: 0.8;
-  margin-top: 0.375rem;
-  font-weight: 500;
-}
-
-.message-user .message-timestamp {
-  text-align: right;
-  color: rgba(255, 255, 255, 0.7);
 }
 
 .message-ai .message-timestamp {
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .dark .message-ai .message-timestamp {
@@ -518,12 +515,13 @@ const styles = `
 /* Input Area */
 .input-section {
   position: relative;
-  padding: 1rem;
-  background: white;
-  border-top: 1px solid #e5e7eb;
-  border-bottom-left-radius: 1rem;
-  border-bottom-right-radius: 1rem;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.02);
+  padding: 1.25rem;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
 }
 
 .dark .input-section {
@@ -531,187 +529,48 @@ const styles = `
   border-color: #374151;
 }
 
-/* Main Input */
-.main-input {
-  width: 100%;
-  min-height: 60px;
-  max-height: 200px;
-  padding: 0.875rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  background: #f9fafb;
-  color: #1f2937;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  resize: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.dark .main-input {
-  background: #111827;
-  color: #f9fafb;
-  border-color: #374151;
-}
-
-.main-input:focus {
-  outline: none;
-  border-color: #818cf8;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-/* Send Button */
-.send-button {
-  position: absolute;
-  right: 1.75rem;
-  bottom: 1.75rem;
-  background: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
-}
-
-.send-button:hover {
-  background: #4338ca;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.25);
-}
-
-.send-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Animations */
-@keyframes messageAppear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Scrollbar */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 163, 175, 0.7);
-}
-
-.dark .chat-messages::-webkit-scrollbar-thumb {
-  background-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .chat-messages::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(75, 85, 99, 0.7);
-}
-  flex-direction: column;
-  gap: 0.75rem;
-  scroll-behavior: smooth;
-  max-height: calc(100% - 180px);
-}
-
-.message {
-  max-width: 90%;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.875rem;
-  line-height: 1.35;
-  position: relative;
-  animation: messageAppear 0.2s ease-out;
-  font-size: 0.9rem;
-  word-wrap: break-word;
-}
-
-@keyframes messageAppear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.message-user {
-  align-self: flex-end;
-  background: var(--primary-color);
-  color: white;
-  border-bottom-right-radius: 0.25rem;
-  margin-left: auto;
-}
-
-.message-ai {
-  align-self: flex-start;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-bottom-left-radius: 0.25rem;
-  border: 1px solid var(--border-color);
-}
-
-.message-timestamp {
-  display: block;
-  font-size: 0.6875rem;
-  opacity: 0.8;
-  margin-top: 0.375rem;
-}
-
-.message-user .message-timestamp {
-  text-align: right;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.message-ai .message-timestamp {
-  color: var(--text-secondary);
-}
-
 /* Typing Indicator */
 .typing-indicator {
   display: flex;
-  gap: 0.375rem;
+  gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   background: var(--bg-secondary);
-  border-radius: 1.125rem;
+  border-radius: 1.5rem;
   width: fit-content;
   align-self: flex-start;
   border: 1px solid var(--border-color);
-  margin-bottom: 1rem;
+  margin: 0.5rem 0 1rem 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  animation: typingPulse 1.5s infinite ease-in-out;
 }
 
 .typing-dot {
   width: 8px;
   height: 8px;
-  background: var(--text-secondary);
+  background: var(--primary-color);
   border-radius: 50%;
-  opacity: 0.6;
-  animation: typingAnimation 1.4s infinite ease-in-out;
+  opacity: 0.4;
+  animation: typingPulse 1.4s infinite ease-in-out;
+  display: inline-block;
+  margin: 0 1px;
 }
 
-.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(1) { 
+  animation-delay: 0s;
+  background: var(--primary-color);
+}
+
+.typing-dot:nth-child(2) { 
+  animation-delay: 0.2s;
+  background: var(--primary-color);
+  opacity: 0.6;
+}
+
+.typing-dot:nth-child(3) { 
+  animation-delay: 0.4s;
+  background: var(--primary-color);
+  opacity: 0.8;
+}
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
@@ -1232,7 +1091,10 @@ const VideoPlayer = () => {
     lastUpdate: Date.now(),
     playCount: 0,
     stopCount: 0,
-    cumulativeTime: 0
+    cumulativeTime: 0,
+    sessions: [],
+    totalSessionTime: 0,
+    totalBreakTime: 0
   });
   const [videoTitle, setVideoTitle] = useState<string | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
@@ -1312,6 +1174,10 @@ const VideoPlayer = () => {
   const stopwatchInterval = useRef<NodeJS.Timeout | null>(null);
 
   const [volume, setVolume] = useState(100);
+  const [isMuted, setIsMuted] = useState(false);
+  const [lastVolume, setLastVolume] = useState(100);
+  const [savedTimestamp, setSavedTimestamp] = useState<number | null>(null);
+  const [hasSavedTimestamp, setHasSavedTimestamp] = useState(false);
   const [lastClick, setLastClick] = useState({ time: 0, x: 0 });
 
   // Extract video progress list for useMemo/useEffect dependencies
@@ -1377,13 +1243,63 @@ const VideoPlayer = () => {
     [playlist?.videos, videoProgressList]
   );
 
+  // Helper function to generate a unique ID
+  const generateId = () => {
+    return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+  };
+
+  // Load session data from localStorage
+  const loadSessionData = useCallback((videoId: string) => {
+    const savedData = localStorage.getItem(`sessionData_${videoId}`);
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (e) {
+        console.error('Error loading session data:', e);
+      }
+    }
+    return { sessions: [], totalSessionTime: 0, totalBreakTime: 0 };
+  }, []);
+
+  // Save session data to localStorage
+  const saveSessionData = useCallback((videoId: string, data: any) => {
+    try {
+      localStorage.setItem(`sessionData_${videoId}`, JSON.stringify(data));
+    } catch (e) {
+      console.error('Error saving session data:', e);
+    }
+  }, []);
+
+  // Start a new session
+  const startNewSession = useCallback(() => {
+    if (!currentVideo || !playlist) return null;
+    
+    const sessionId = generateId();
+    const newSession: WatchSession = {
+      id: sessionId,
+      startTime: Date.now(),
+      activeTime: 0,
+      breakTime: 0,
+      videoId: currentVideo.id,
+      videoTitle: currentVideo.title,
+      playlistId: playlist.id
+    };
+    
+    return newSession;
+  }, [currentVideo, playlist]);
+
   // Wrap startWatchTimeTracking in useCallback
   const startWatchTimeTracking = useCallback(() => {
     if (!playerRef.current || !currentVideo) return;
+    
     const now = Date.now();
     lastUpdateTime.current = now;
-    // Load existing watch time data
+    
+    // Load existing watch time and session data
     const savedData = localStorage.getItem(`watchTime_${currentVideo.id}`);
+    const sessionData = loadSessionData(currentVideo.id);
+    
+    // Parse existing data or initialize
     let existingData: WatchTimeData | null = null;
     if (savedData) {
       try {
@@ -1392,56 +1308,139 @@ const VideoPlayer = () => {
         console.error('Error loading watch time data:', e);
       }
     }
+
+    // Start a new session if none is active
+    let currentSession = existingData?.currentSessionId 
+      ? sessionData.sessions.find((s: WatchSession) => s.id === existingData?.currentSessionId)
+      : null;
+    
+    if (!currentSession) {
+      currentSession = startNewSession();
+      if (currentSession) {
+        sessionData.sessions.push(currentSession);
+        saveSessionData(currentVideo.id, sessionData);
+      }
+    }
+    
     // Start the update interval
     updateInterval.current = window.setInterval(() => {
       if (!playerRef.current || !currentVideo) return;
+      
       const currentTime = Date.now();
       const elapsed = Math.floor((currentTime - lastUpdateTime.current) / 1000) * 1000; // Round to nearest second
       lastUpdateTime.current = currentTime;
-      // Update watch time data
+      
+      // Update watch time and session data
       setWatchTimeData(prev => {
+        const sessionData = loadSessionData(currentVideo.id);
+        const currentSession = prev.currentSessionId 
+          ? sessionData.sessions.find((s: WatchSession) => s.id === prev.currentSessionId)
+          : null;
+        
+        if (currentSession) {
+          currentSession.activeTime += elapsed;
+          sessionData.totalSessionTime += elapsed;
+          saveSessionData(currentVideo.id, sessionData);
+        }
+        
         const updatedData = {
           ...prev,
           totalWatchTime: prev.totalWatchTime + elapsed,
           lastUpdate: currentTime,
-          cumulativeTime: prev.cumulativeTime + elapsed
+          cumulativeTime: prev.cumulativeTime + elapsed,
+          sessions: [...sessionData.sessions],
+          totalSessionTime: sessionData.totalSessionTime,
+          currentSessionId: currentSession?.id
         };
+        
         localStorage.setItem(`watchTime_${currentVideo.id}`, JSON.stringify(updatedData));
         return updatedData;
       });
     }, 1000);
-    // Increment play count and initialize cumulative time if needed
+
+    // Update watch time data with session info
     setWatchTimeData(prev => {
       const updatedData = {
         ...prev,
         playCount: prev.playCount + 1,
-        cumulativeTime: existingData?.cumulativeTime || prev.cumulativeTime
+        cumulativeTime: existingData?.cumulativeTime || prev.cumulativeTime,
+        sessions: [...sessionData.sessions],
+        totalSessionTime: sessionData.totalSessionTime,
+        totalBreakTime: sessionData.totalBreakTime,
+        currentSessionId: currentSession?.id
       };
+      
       localStorage.setItem(`watchTime_${currentVideo.id}`, JSON.stringify(updatedData));
       return updatedData;
     });
-  }, [currentVideo]);
+  }, [currentVideo, loadSessionData, saveSessionData, startNewSession]);
 
   // Wrap stopWatchTimeTracking in useCallback
   const stopWatchTimeTracking = useCallback(() => {
     if (!currentVideo) return;
+    
     const now = Date.now();
+    
     // Clear the update interval
     if (updateInterval.current) {
       clearInterval(updateInterval.current);
       updateInterval.current = null;
     }
+    
     // Update and save to localStorage
     setWatchTimeData(prev => {
+      const sessionData = loadSessionData(currentVideo.id);
+      const currentSession = prev.currentSessionId 
+        ? sessionData.sessions.find((s: WatchSession) => s.id === prev.currentSessionId)
+        : null;
+      
+      if (currentSession) {
+        // Mark the end of the current break
+        if (prev.lastBreakStart) {
+          const breakDuration = now - prev.lastBreakStart;
+          if (currentSession) {
+            currentSession.breakTime += breakDuration;
+            sessionData.totalBreakTime += breakDuration;
+          }
+        }
+        
+        // End the current session if it's been inactive for too long (e.g., 30 minutes)
+        const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
+        if (now - prev.lastUpdate > INACTIVITY_THRESHOLD) {
+          currentSession.endTime = prev.lastUpdate + INACTIVITY_THRESHOLD;
+          saveSessionData(currentVideo.id, sessionData);
+          
+          const finalData = {
+            ...prev,
+            lastUpdate: now,
+            stopCount: prev.stopCount + 1,
+            sessions: [...sessionData.sessions],
+            totalSessionTime: sessionData.totalSessionTime,
+            totalBreakTime: sessionData.totalBreakTime,
+            currentSessionId: undefined,
+            lastBreakStart: undefined
+          };
+          
+          localStorage.setItem(`watchTime_${currentVideo.id}`, JSON.stringify(finalData));
+          return finalData;
+        }
+      }
+      
+      // Just update the last break start time
       const finalData = {
         ...prev,
         lastUpdate: now,
-        stopCount: prev.stopCount + 1
+        stopCount: prev.stopCount + 1,
+        lastBreakStart: now,
+        sessions: [...sessionData.sessions],
+        totalSessionTime: sessionData.totalSessionTime,
+        totalBreakTime: sessionData.totalBreakTime
       };
+      
       localStorage.setItem(`watchTime_${currentVideo.id}`, JSON.stringify(finalData));
       return finalData;
     });
-  }, [currentVideo]);
+  }, [currentVideo, loadSessionData, saveSessionData]);
 
   // Save chat messages to localStorage
   useEffect(() => {
@@ -1718,6 +1717,25 @@ const VideoPlayer = () => {
     toast.success('Progress updated!');
   };
 
+  // Function to handle save/restore timestamp
+  const handleTimestampAction = () => {
+    if (!playerRef.current) return;
+    
+    if (hasSavedTimestamp && savedTimestamp !== null) {
+      // Restore the saved timestamp
+      playerRef.current.seekTo(savedTimestamp, true);
+      setHasSavedTimestamp(false);
+      setSavedTimestamp(null);
+      toast.success('Resumed from saved timestamp');
+    } else {
+      // Save current timestamp
+      const currentTime = playerRef.current.getCurrentTime();
+      setSavedTimestamp(currentTime);
+      setHasSavedTimestamp(true);
+      toast.success('Timestamp saved! Click again to resume');
+    }
+  };
+
   // Function to go to next video
   const goToNextVideo = () => {
     if (playlist && currentVideoIndex < playlist.videos.length - 1) {
@@ -1792,16 +1810,7 @@ const VideoPlayer = () => {
         completedVideos.push(videoToStore);
         localStorage.setItem('completedVideos', JSON.stringify(completedVideos));
       }
-      // Reset watch time data for the completed video
-      localStorage.removeItem(`watchTime_${currentVideo.id}`);
-      setWatchTimeData({
-        totalWatchTime: 0,
-        lastPosition: 0,
-        lastUpdate: Date.now(),
-        playCount: 0,
-        stopCount: 0,
-        cumulativeTime: 0
-      });
+    
       setPlaylist(updatedPlaylist);
       setShowCompletionDialog(true);
       // Wait 5 seconds, then close modal and go to next video if any
@@ -1859,17 +1868,7 @@ const VideoPlayer = () => {
     // Update state
     setPlaylist(updatedPlaylist);
     
-    // If the current video is the one being reset, update its progress
-    if (currentVideo?.id === videoId) {
-      setWatchTimeData({
-        totalWatchTime: 0,
-        lastPosition: 0,
-        lastUpdate: Date.now(),
-        playCount: 0,
-        stopCount: 0,
-        cumulativeTime: 0
-      });
-    }
+   
 
     // Dispatch playlist update event
     window.dispatchEvent(new CustomEvent('playlistUpdated', {
@@ -3723,7 +3722,7 @@ const VideoPlayer = () => {
                 className="text-6xl md:text-7xl drop-shadow-[0_2px_16px_black]"
                 style={{ color: '#fff', textShadow: '0 0 12px #000' }}
               >🚀</motion.span>
-            </motion.div>
+            </motion.div> 
 
             {/* Logo with white/black glow */}
             <motion.img
@@ -4276,11 +4275,14 @@ const VideoPlayer = () => {
                       </Button>
                     )}
                   </div>
-                  {currentVideo.progress >= 100 && (
-                    <Badge className="bg-green-600 hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-700">
-                      Complete
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {currentVideo.progress >= 100 && (
+                      <Badge className="bg-green-600 hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-700">
+                        Complete
+                      </Badge>
+                    )}
+                    
+                  </div>
                 </div>
 
               </CardHeader>
@@ -4318,9 +4320,38 @@ const VideoPlayer = () => {
                                 : 'bg-gradient-to-r from-green-600/10 to-emerald-600/10 group-hover:from-green-600/20 group-hover:to-emerald-600/20'
                             }`}></span>
                           </button>
+                          
                           <div className="h-6 w-px bg-gradient-to-b from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700" />
                           
+                          <button
+                            onClick={handleTimestampAction}
+                            className={`group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 ${
+                              hasSavedTimestamp
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-800'
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20'
+                            }`}
+                          >
+                            <span className={`absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                              hasSavedTimestamp ? 'hidden' : ''
+                            }`}></span>
+                            <span className="relative z-10 flex items-center">
+                              <Clock 
+                                className={`w-5 h-5 mr-2 transition-transform duration-300 ${
+                                  hasSavedTimestamp ? 'text-blue-500' : 'group-hover:scale-110'
+                                }`} 
+                              />
+                              {hasSavedTimestamp ? 'Resume from Saved' : 'Save Timestamp'}
+                            </span>
+                            <span className={`absolute inset-0 w-full h-full rounded-xl ${
+                              hasSavedTimestamp 
+                                ? 'bg-gradient-to-r from-blue-100/50 to-blue-100/30 dark:from-blue-900/20 dark:to-blue-900/10' 
+                                : 'bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20'
+                            }`}></span>
+                          </button>
                         </div>
+                        
+                        {/* Spacer between button groups */}
+                        <div className="flex-1"></div>
                         
                         <div className="flex items-center gap-3">
                           {/* Quality, Volume and Speed Controls - Improved Design */}
@@ -4349,17 +4380,47 @@ const VideoPlayer = () => {
                               {/* Volume Indicator */}
                               <div className="relative mx-1 group">
                                 <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isMuted) {
+                                      // Unmute and restore to last volume
+                                      const newVolume = lastVolume > 0 ? lastVolume : 50;
+                                      setVolume(newVolume);
+                                      setIsMuted(false);
+                                      if (playerRef.current) {
+                                        playerRef.current.setVolume(newVolume);
+                                        playerRef.current.unMute();
+                                      }
+                                    } else {
+                                      // Mute and save current volume
+                                      setLastVolume(volume);
+                                      setVolume(0);
+                                      setIsMuted(true);
+                                      if (playerRef.current) {
+                                        playerRef.current.setVolume(0);
+                                        playerRef.current.mute();
+                                      }
+                                    }
+                                  }}
                                   className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-transparent hover:border-white/20"
                                   style={{ minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' }}
                                   tabIndex={0}
-                                  title={`Volume: ${volume}%`}
+                                  title={isMuted ? 'Unmute' : `Volume: ${volume}%`}
                                 >
                                   <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                                  <Volume2 className={`w-6 h-6 text-white relative z-10 ${volume === 0 ? 'opacity-50' : ''}`} />
+                                  {isMuted ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white relative z-10">
+                                      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                                      <line x1="2" y1="2" x2="22" y2="22"/>
+                                      <line x1="17" y1="17" x2="17.01" y2="17"/>
+                                    </svg>
+                                  ) : (
+                                    <Volume2 className={`w-6 h-6 text-white relative z-10 ${volume === 0 ? 'opacity-50' : ''}`} />
+                                  )}
                                   <span className="absolute bottom-0 left-0 right-0 h-1 bg-white/30">
                                     <span 
                                       className="absolute bottom-0 left-0 h-full bg-white transition-all duration-300"
-                                      style={{ width: `${volume}%` }}
+                                      style={{ width: isMuted ? '0%' : `${volume}%` }}
                                     ></span>
                                   </span>
                                 </button>
@@ -4603,17 +4664,46 @@ const VideoPlayer = () => {
                           </span>
                           <span className="play">Pomodoro</span>
                         </button>
+
+                       
                       </div>
+                      <button
+                            onClick={() => {/* TODO: Add summary functionality */}}
+                            className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20"
+                          >
+                            <span className="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></span>
+                            <span className="relative z-10 flex items-center">
+                              <FileText className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" />
+                              Summary
+                            </span>
+                            <span className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20"></span>
+                          </button>
+
+                          <button
+                            onClick={() => {/* TODO: Add summary functionality */}}
+                            className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20"
+                          >
+                            <span className="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></span>
+                            <span className="relative z-10 flex items-center">
+                              <img 
+                                src={quizIcon} 
+                                alt="Quiz" 
+                                className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" 
+                              />
+                              Quiz
+                            </span>
+                            <span className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20"></span>
+                          </button>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-          {/* Remove the sidebar video lists here */}
-              </div>
+         
+        </div>
         {/* Move the video lists to the bottom, horizontally */}
-          <div ref={videoListsRef} />
+        <div ref={videoListsRef} />
           {showAllVideos && (
           <div className="mt-12">
             <div className="flex flex-col gap-8">
@@ -4706,6 +4796,32 @@ const VideoPlayer = () => {
                             }}
                           >
                             Reset
+                          </button>
+                          {/* Save Timestamp Button */}
+                          <button
+                            onClick={handleTimestampAction}
+                            className={`group relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl font-medium text-sm tracking-wide transition-all duration-300 ${
+                              hasSavedTimestamp
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-800'
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-2 border-transparent hover:border-white/20'
+                            }`}
+                          >
+                            <span className={`absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                              hasSavedTimestamp ? 'hidden' : ''
+                            }`}></span>
+                            <span className="relative z-10 flex items-center">
+                              <Clock 
+                                className={`w-5 h-5 mr-2 transition-transform duration-300 ${
+                                  hasSavedTimestamp ? 'text-blue-500' : 'group-hover:scale-110'
+                                }`} 
+                              />
+                              {hasSavedTimestamp ? 'Resume from Saved' : 'Save Timestamp'}
+                            </span>
+                            <span className={`absolute inset-0 w-full h-full rounded-xl ${
+                              hasSavedTimestamp 
+                                ? 'bg-gradient-to-r from-blue-100/50 to-blue-100/30 dark:from-blue-900/20 dark:to-blue-900/10' 
+                                : 'bg-gradient-to-r from-blue-600/10 to-indigo-600/10 group-hover:from-blue-600/20 group-hover:to-indigo-600/20'
+                            }`}></span>
                           </button>
                         </div>
                         <div className="mt-2 text-xs text-gray-700 dark:text-gray-200 font-medium truncate text-center">
