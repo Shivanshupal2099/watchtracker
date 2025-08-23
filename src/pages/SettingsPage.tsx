@@ -22,18 +22,6 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
 // Add interfaces for data management
-interface ParsedTodo {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority: 'low' | 'medium' | 'high';
-  category?: string;
-  dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
-  notes?: string;
-}
-
 interface ParsedCategory {
   id: string;
   name: string;

@@ -17,7 +17,6 @@ import Login from "./pages/Login";
 import CreateAccount from "./pages/CreateAccount";
 import Library from "./pages/Library";
 import { SettingsPage } from "./pages/SettingsPage";
-import Todo from "./pages/Todo";
 import Pomodoro from "./pages/Pomodoro";
 import Premium from "./pages/Premium";
 import Classroom from "./pages/Classroom";
@@ -34,7 +33,7 @@ import { loadQuestionsFromFile } from './utils/loadQuestions';
 import { PlaylistProvider } from '@/context/PlaylistContext';
 import { Button } from "@/components/ui/button";
 import Shorts from "./pages/Shorts";
-
+import Notes from "./pages/Notes";
 
 import { ArrowLeft } from "lucide-react";
 
@@ -81,7 +80,6 @@ const AppContent = () => {
               <Route path="/library" element={<Library />} />
               <Route path="/classroom" element={<Classroom />} />
               <Route path="/clubs" element={<Clubs />} />
-              <Route path="/todo" element={<Todo />} />
               <Route path="/pomodoro" element={<Pomodoro />} />
               <Route path="/premium" element={<Premium />} />
               <Route path="/bridgelab" element={<BridgeLab />} />
@@ -91,6 +89,7 @@ const AppContent = () => {
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/find-cofounder" element={<FindCoFounder />} />
+              <Route path="/notes" element={<Notes />} />
               <Route 
                 path="/playlist/:playlistId" 
                 element={<PlaylistDetailWrapper />} 
@@ -110,7 +109,7 @@ const AppContent = () => {
 // New component to handle playlist type routing
 const PlaylistDetailWrapper = () => {
   const { playlistId } = useParams();
-  const [playlistType, setPlaylistType] = useState<'video' | 'coding' | null>(null);
+  const [playlistType, setPlaylistType] = useState<'video' | 'coding' | 'audiobook' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -187,7 +186,16 @@ const PlaylistDetailWrapper = () => {
   }
 
   console.log('PlaylistDetailWrapper: Rendering component for playlist type:', playlistType);
-  return playlistType === 'coding' ? <PlaylistDetailCoding /> : <PlaylistDetail />;
+  
+  switch (playlistType) {
+    case 'coding':
+      return <PlaylistDetailCoding />;
+    case 'audiobook':
+      // Return the same as video for now, or create a dedicated AudiobookDetail component
+      return <PlaylistDetail />;
+    default:
+      return <PlaylistDetail />;
+  }
 };
 
 const App = () => (

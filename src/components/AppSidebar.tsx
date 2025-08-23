@@ -1,4 +1,4 @@
-import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight } from 'lucide-react';
+import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight, Bookmark } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -27,6 +27,15 @@ const menuItems = [
     glow: 'shadow-blue-500/20',
   },
   {
+    title: 'Notes',
+    url: '/notes',
+    icon: Bookmark,
+    gradient: 'from-rose-500 to-pink-500',
+    bgGradient: 'from-rose-500/5 to-pink-500/5',
+    hoverGradient: 'from-rose-500/10 to-pink-500/10',
+    glow: 'shadow-rose-500/20',
+  },
+  {
     title: 'Library',
     url: '/library',
     icon: Library,
@@ -53,15 +62,6 @@ const menuItems = [
     hoverGradient: 'from-amber-400/10 to-orange-500/10',
     glow: 'shadow-amber-400/20',
     customIcon: univoralabLogo,
-  },
-  {
-    title: 'To-Do',
-    url: '/todo',
-    icon: CheckSquare,
-    gradient: 'from-rose-500 to-pink-500',
-    bgGradient: 'from-rose-500/5 to-pink-500/5',
-    hoverGradient: 'from-rose-500/10 to-pink-500/10',
-    glow: 'shadow-rose-500/20',
   },
   {
     title: 'Profile',
