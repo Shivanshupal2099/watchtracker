@@ -1,12 +1,11 @@
-import { Home, User, Library, Settings, CheckSquare, School, Sparkles, ChevronRight, Bookmark } from 'lucide-react';
+import { Home, User, Library, Settings, School, Sparkles,  Bookmark } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import univoraLogo from '../assets/univora.png';
-import univoralabLogo from '../assets/univoralab.png';
+import logo from '../assets/logo.png';
+import bridgelabLogo from '../assets/bridgelab.png';
 // Logos are now available as univoraLogo and univoralabLogo
 import {
-  Sidebar,
   SidebarContent,
   SidebarMenu,
   SidebarMenuButton,
@@ -61,7 +60,7 @@ const menuItems = [
     bgGradient: 'from-amber-400/5 to-orange-500/5',
     hoverGradient: 'from-amber-400/10 to-orange-500/10',
     glow: 'shadow-amber-400/20',
-    customIcon: univoralabLogo,
+    customIcon: bridgelabLogo,
   },
   {
     title: 'Profile',
@@ -150,7 +149,7 @@ export function AppSidebar() {
               }}
             >
               <img 
-                src={univoraLogo} 
+                src={logo} 
                 alt="UnivoraLab Logo" 
                 className={cn(
                   "w-16 h-16 object-contain transition-all duration-300",

@@ -2,22 +2,17 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '../components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Upload, Users, Lightbulb, BookOpen, Trophy, ShieldCheck, UserCheck, MessageCircle, FileText, UserCircle, ArrowLeft, User, Globe, Code, Award, Settings, Clock, Filter, Search, ChevronDown, Plus, X, Check, RotateCcw, BarChart3, Smile, Play, Video, Tag, Rocket, Home, Library, School, CheckSquare, Sparkles } from 'lucide-react';
-import MDEditor from '@uiw/react-md-editor';
-import MarkdownPreview from '@uiw/react-markdown-preview';
+import { Upload, Users, Lightbulb, BookOpen, Trophy, UserCheck, MessageCircle, FileText, UserCircle, ArrowLeft, User, Globe, Code, Award, Settings, Clock, Filter, Search, ChevronDown, Plus, X, Check, RotateCcw, BarChart3, Smile, Play, Video, Tag, Rocket, Home, Library, School, CheckSquare, Sparkles } from 'lucide-react';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Switch } from '../components/ui/switch';
-import BridgeLabLogo from '../assets/bridgelab_logo.png';
-import ImageEditor from '../components/ImageEditor';
+import BridgeLabLogo from '../assets/bridgelab.png';
 import { toast } from '../hooks/use-toast';
-import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogTrigger as ConfirmDialogTrigger } from '../components/ui/dialog';
 import { Dialog as ConferenceDialog, DialogContent as ConferenceDialogContent, DialogHeader as ConferenceDialogHeader, DialogTitle as ConferenceDialogTitle } from '../components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/tooltip';
 
@@ -4600,12 +4595,18 @@ const BridgeLab: React.FC = () => {
                 {tabItems[0].value === 'discover' && (
                   <div className="flex items-center justify-center mb-6 px-2">
                     <div className="relative group">
-                      <div className="absolute -inset-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity duration-300"></div>
-                      <img 
-                        src={BridgeLabLogo} 
-                        alt="BridgeLab" 
-                        className="relative h-12 w-auto transform transition-transform duration-300 group-hover:scale-110" 
-                      />
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-100 via-yellow-300 to-yellow-500 opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500 group-hover:scale-125"></div>
+                      <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-0 group-hover:opacity-70 blur-sm transition-all duration-500 group-hover:scale-110"></div>
+                      <div className="relative z-10 p-1.5 bg-white/80 rounded-full shadow-lg backdrop-blur-sm border border-white/50 overflow-hidden">
+                        <div className="relative overflow-hidden rounded-full p-1 bg-gradient-to-br from-white to-gray-50">
+                          <img 
+                            src={BridgeLabLogo} 
+                            alt="BridgeLab" 
+                            className="relative h-16 w-auto transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/0 via-yellow-200/20 to-yellow-400/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -4614,25 +4615,42 @@ const BridgeLab: React.FC = () => {
                   <TabsTrigger
                     key={value}
                     value={value}
-                    className={`group relative flex items-center justify-start px-4 py-3 rounded-xl font-brand text-sm font-medium transition-all duration-300 w-full cursor-pointer
-                      hover:bg-blue-50/80 hover:shadow-sm hover:translate-x-1
+                    className={`group relative flex items-center justify-start px-4 py-3 rounded-xl font-brand text-sm font-medium transition-all duration-400 w-full cursor-pointer overflow-hidden
                       ${tab === value
-                        ? 'text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100/70 shadow-sm border border-blue-200/80 font-semibold translate-x-1'
-                        : 'text-neutral-600 hover:text-blue-600 hover:bg-blue-50/50'
+                        ? 'text-blue-700 bg-gradient-to-r from-blue-50/90 to-blue-100/60 shadow-md border border-blue-200/80 font-semibold translate-x-1'
+                        : 'text-neutral-600 hover:text-blue-700 hover:bg-white/80 hover:shadow-sm hover:translate-x-1.5 hover:border hover:border-blue-100/50'
                       }
                     `}
                   >
-                    <span className={`flex items-center justify-center w-6 h-6 mr-3 rounded-full transition-all duration-300 ${
-                      tab === value ? 'bg-blue-100 text-blue-600' : 'group-hover:bg-blue-100/50 text-neutral-500 group-hover:text-blue-500'
+                    {/* Animated background on hover */}
+                    <span className={`absolute inset-0 bg-gradient-to-r from-blue-50/0 to-blue-100/0 transition-all duration-500 group-hover:from-blue-50/70 group-hover:to-blue-100/40 ${tab === value ? 'opacity-100' : 'opacity-0'}`}></span>
+                    
+                    {/* Animated left border indicator */}
+                    <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-blue-500 transition-all duration-300 transform -translate-x-1 group-hover:translate-x-0 ${tab === value ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}></span>
+                    
+                    {/* Icon with enhanced hover effect */}
+                    <span className={`relative z-10 flex items-center justify-center w-8 h-8 mr-3 rounded-xl transition-all duration-400 ${
+                      tab === value 
+                        ? 'bg-blue-100 text-blue-600 shadow-inner' 
+                        : 'bg-white/60 group-hover:bg-blue-50 text-neutral-500 group-hover:text-blue-600 group-hover:shadow-sm'
                     }`}>
                       {React.cloneElement(icon, {
-                        className: `w-4 h-4 transition-all duration-300 ${tab === value ? 'scale-110' : 'group-hover:scale-110'}`
+                        className: `w-4 h-4 transition-all duration-300 ${tab === value ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`
                       })}
                     </span>
-                    <span className="hidden md:inline transition-all duration-300 font-medium">{label}</span>
+                    
+                    {/* Label with subtle slide effect */}
+                    <span className="relative z-10 hidden md:inline transition-all duration-300 font-medium group-hover:font-semibold group-hover:tracking-wide">
+                      {label}
+                    </span>
+                    
+                    {/* Active indicator */}
                     {tab === value && (
-                      <span className="absolute right-3 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                      <span className="absolute right-3 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                     )}
+                    
+                    {/* Hover shine effect */}
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -translate-x-full group-hover:translate-x-full"></span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -4942,7 +4960,7 @@ const BridgeLab: React.FC = () => {
         <button
           className="flex flex-col items-center justify-center px-2 py-1 text-blue-600 dark:text-blue-400"
         >
-          <img src={BridgeLabLogo} alt="BridgeLab" className="w-6 h-6" />
+          <img src={BridgeLabLogo} alt="BridgeLab" className="w-8 h-8" />
           <span className="text-xs mt-1">BridgeLab</span>
         </button>
         

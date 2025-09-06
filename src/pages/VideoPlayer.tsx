@@ -1,22 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import AIService from '@/services/aiService';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, SkipBack, SkipForward, CheckCircle, Clock, Play, List, PlayCircle, RotateCcw, Timer, ChevronLeft, Send, Mic, Smile, Search, ThumbsUp, Heart, Star, Flag, MoreVertical, Pin, Trash2, MessageSquare, StickyNote, Save, Edit2, X, Image, Download, FileText, Tag, Volume2, Sun, Moon, Maximize2, Minimize2, Code, Video as VideoIcon, Snowflake, MicOff, Eye, Phone, PhoneOff, User, Share } from 'lucide-react';
+import { ArrowLeft, SkipBack, SkipForward, CheckCircle, Clock, Play, List, PlayCircle,  Timer, Mic, Smile, Trash2, MessageSquare, StickyNote,  X, Image, FileText,  Volume2,  Maximize2, Minimize2,  Video as VideoIcon, Snowflake, MicOff, Eye, Phone, PhoneOff, User, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Playlist, Video as PlaylistVideo } from '@/types/playlist';
+import { Playlist} from '@/types/playlist';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 import React from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -884,11 +876,18 @@ const styles = `
 } */
 
 .youtube-player-container {
-  position: relative;
-  width: 100%;
+  position: absolute;
+  right: 1.5rem; /* Changed from right: 0 */
+  left: 1.5rem;  /* Added left spacing */
+  top: 0;
+  width: auto;    /* Changed from 60% */
   height: 100%;
-  background: #000;
+  max-width: 900px;
   overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  margin: 0 auto; /* Center the container */
 }
 
 .youtube-player-container iframe {
@@ -1146,16 +1145,13 @@ const VideoPlayer = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [floatingNotes, setFloatingNotes] = useState<Note[]>([]);
+  
   
   // AI Chat State
   const [aiQuestion, setAIQuestion] = useState('');
   const [aiLoading, setAILoading] = useState(false);
   const [aiResponses, setAIResponses] = useState<{question: string; answer: string}[]>([]);
-  const [showFlashcards, setShowFlashcards] = useState(false);
-  const [currentFlashcard, setCurrentFlashcard] = useState<Flashcard | null>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  
 
   // Add new state variables for code IDE
   // Remove Code IDE interfaces and state
@@ -1458,7 +1454,7 @@ const VideoPlayer = () => {
       const { playlistId: updatedPlaylistId, updatedPlaylist } = event.detail;
       if (updatedPlaylistId === id) {
         setPlaylist(updatedPlaylist);
-        if (currentVideoIndex === playlist?.videos.length - 1) {
+        if (playlist && currentVideoIndex === playlist.videos.length - 1) {
           setCurrentVideoIndex(updatedPlaylist.videos.length - 1);
         }
         const currentVideo = updatedPlaylist.videos[currentVideoIndex];
@@ -2809,16 +2805,7 @@ const VideoPlayer = () => {
     }
   };
 
-  // Function to remove tag in popup
-  const removePopupTag = (tag: string) => {
-    setPopupNoteTags(prev => prev.filter(t => t !== tag));
-  };
-
-  // Function to toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+  
 
   // Function to start voice recording
   const startVoiceRecording = async () => {
@@ -2867,13 +2854,13 @@ const VideoPlayer = () => {
     }
   };
 
-  // Function to add a tag
-  const addTag = (tag: string) => {
-    if (!tag.trim()) return;
-    if (!selectedTags.includes(tag)) {
-      setSelectedTags(prev => [...prev, tag]);
-    }
-  };
+  // // Function to add a tag
+  // const addTag = (tag: string) => {
+  //   if (!tag.trim()) return;
+  //   if (!selectedTags.includes(tag)) {
+  //     setSelectedTags(prev => [...prev, tag]);
+  //   }
+  // };
 
   // Function to remove a tag
   const removeTag = (tag: string) => {
@@ -2997,7 +2984,6 @@ const VideoPlayer = () => {
   const [showAdPopup, setShowAdPopup] = useState(false);
   const [adPopupTimer, setAdPopupTimer] = useState(0); // seconds since popup appeared
   const [adPopupCanClose, setAdPopupCanClose] = useState(false);
-  const [adBlockDetected, setAdBlockDetected] = useState(false);
   const adTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const adCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const adTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -3007,7 +2993,6 @@ const VideoPlayer = () => {
     setShowAdPopup(true);
     setAdPopupTimer(0);
     setAdPopupCanClose(false);
-    setAdBlockDetected(false);
     // Auto-pause the video when the ad appears
     if (playerRef.current) {
       playerRef.current.pauseVideo();
@@ -3808,15 +3793,16 @@ const VideoPlayer = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           {playlist && (
-            <Button
-              variant="outline"
+            <button
               onClick={() => navigate(`/playlist/${playlist.id}`)}
-              className="bg-black text-white rounded-full font-bold px-6 py-2 shadow-md border border-black transition-all duration-200 hover:bg-white hover:text-black hover:border-black flex items-center gap-2"
-              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
+              className="group relative w-12 h-12 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm shadow-lg border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-all duration-300 hover:bg-blue-500 hover:scale-105 hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-500"
+              aria-label="Back to Playlist"
             >
-              <ArrowLeft className="w-5 h-5 mr-2 transition-all duration-200 group-hover:text-black" />
-              Back to Playlist
-            </Button>
+              <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300 group-hover:text-white transition-colors duration-300" />
+              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                ⌫
+              </span>
+            </button>
           )}
           <div className="flex items-center gap-2">
             <button
@@ -4023,43 +4009,58 @@ const VideoPlayer = () => {
             <Card
               className="
                 relative
-                bg-white/90
+                bg-whites/90
                 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900
                 shadow-2xl
                 rounded-3xl
                 border-0
+                w-[95%]
+                max-w-[1800px]
+                mx-auto
+                pt-14
+                pb-14
+                pr-11
+                ml-16
+                bg-gray-800
+                -mt-20
+                px-8
                 overflow-visible
                 animate-fade-in
-                border border-white/20 dark:border-blue-900/50
+                border border-black/20 dark:border-yellow-900/50
                 transition-all
                 duration-300
               "
             >
-              <CardContent className="p-0 relative">
+              <CardContent className="p-0 relative flex justify-end">
                 <div
                   ref={videoContainerRef}
                   className={`
                     relative
-                    aspect-video
+                    aspect-[4/3]
                     w-full
-                    rounded-3xl
+                    max-w-[95%]
+                    mx-auto
+                    rounded-xl
                     overflow-hidden
-                    shadow-2xl
-                    transition-transform
+                    transition-all
                     duration-300
                     group
-                    border-4
-                    border-blue-400/30
-                    hover:scale-[1.01]
-                    hover:shadow-[0_8px_40px_0_rgba(37,99,235,0.25)]
-                    ${isFullscreen ? 'z-[9999] bg-black' : ''}
-                    ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 border-blue-700/60' : 'bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100'}
+                    ml-21
+                    border-[16px]
+                    border-t-[24px]
+                    border-b-[24px]
+                    border-gray-800
+                    bg-gray-900
+                    shadow-[0_0_0_8px_#8B5A2B,0_0_0_12px_#A67C52,0_0_0_20px_#8B5A2B,0_0_0_28px_#A67C52,0_0_0_36px_#8B5A2B]
+                    hover:shadow-[0_0_0_8px_#8B5A2B,0_0_0_12px_#A67C52,0_0_0_20px_#8B5A2B,0_0_0_28px_#A67C52,0_0_0_36px_#8B5A2B,0_0_40px_20px_rgba(255,255,255,0.1)]
+                    ${isFullscreen ? 'z-[9999]' : ''}
+                    tv-screen
+                    transform-style: preserve-3d
+                    perspective: 1000px
                   `}
                   style={{
-                    boxShadow: isDarkMode
-                      ? '0 8px 40px 0 rgba(37,99,235,0.25), 0 0 0 2px #2563eb44'
-                      : '0 8px 40px 0 rgba(37,99,235,0.18)',
-                    border: isDarkMode ? '2px solid #2563eb88' : '2px solid #2563eb',
+                    position: 'relative',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                   }}
                   onMouseEnter={() => setIsPlayerHovered(true)}
                   onMouseLeave={() => setIsPlayerHovered(false)}
@@ -4110,7 +4111,9 @@ const VideoPlayer = () => {
                     </div>
                   </div>
                   {/* Gradient overlay for controls */}
-                  <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black/90 via-black/60 to-transparent z-20 pointer-events-none" />
+                  <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/70 to-transparent z-20 pointer-events-none" />
+                  <div className="absolute inset-0 z-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDUwIiB2aWV3Qm94PSIwIDAgNjAwIDQ1MCI+PHBhdGggZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgZD0iTTAgMGg2MDB2NDUwSDB6Ii8+PHRleHQgeD0iNTAlJSIgeT0iNTAlJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiPldhdGNoVHJhY2tlcjwvdGV4dD48L3N2Zz4=')] bg-repeat opacity-5" />
                   {/* Central Play/Stop Button Overlay */}
                   {!isStopwatchRunning && currentVideo && (
                     <div
@@ -4287,7 +4290,7 @@ const VideoPlayer = () => {
 
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-6 ">
                   {/* Video Player Controls */}
                   <div className="bg-white/90 dark:bg-slate-800/90 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-slate-700">
                     <div className="space-y-4">
@@ -5532,21 +5535,79 @@ const VideoPlayer = () => {
       {/* Floating Ask AI Window */}
       <Dialog open={showAskAI} onOpenChange={setShowAskAI}>
         <DialogContent
-          className={`ai-chat-dialog max-w-2xl w-full p-0 rounded-2xl overflow-hidden transition-all duration-200 ${
-            isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+          className={`ai-chat-dialog max-w-2xl w-full p-[2px] rounded-2xl overflow-hidden transition-all duration-300 z-[9999] ${
+            isDarkMode ? 'bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700' : 'bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300'
           }`}
           style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: 'none',
+            boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.25)',
             minHeight: '600px',
             maxHeight: '90vh',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            overflow: 'hidden',
+            zIndex: 9999,
+            backgroundSize: '200% 100%',
+            animation: 'borderFlow 3s linear infinite',
           }}>
-          <div className="ai-chat-dialog w-full h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+          {/* Custom close button */}
+          <button
+            onClick={() => setShowAskAI(false)}
+            className="absolute right-4 top-4 z-20 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            style={{
+              backdropFilter: 'blur(8px)',
+              backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.9)' : 'rgba(239, 68, 68, 0.9)',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+            }}
+            aria-label="Close dialog"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+          
+          {/* Decorative border accent */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
+            style={{
+              boxShadow: '0 0 12px rgba(99, 102, 241, 0.6)',
+              zIndex: 10
+            }}
+          />
+          <div className="ai-chat-dialog w-full h-full flex flex-col bg-white dark:bg-gray-900 rounded-[14px] overflow-hidden relative">
+            {/* Animated border effect */}
+            <div className="absolute inset-0 rounded-[14px] p-[1px] pointer-events-none">
+              <div className="w-full h-full rounded-[13px] bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
             <div className="flex flex-col h-full">
+              {/* Header Section */}
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/95 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.84 8.84 0 01-4.016-.95 1 1 0 11.908-1.778 6.84 6.84 0 003.108.728 6.001 6.001 0 10-6-6c.001.434.052.864.153 1.28a1 1 0 01-1.93.52A8.003 8.003 0 0110 3c4.418 0 8 3.134 8 7z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Assistant</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Ask me anything about this video</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button className="p-1.5 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 text-gray-500 dark:text-gray-400 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               {/* Input Section */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm relative z-10">
                 <div className="relative">
                   <textarea
                     rows={2}
@@ -5582,12 +5643,49 @@ const VideoPlayer = () => {
               </div>
 
               {/* Messages Section */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
+              <div 
+                ref={messagesContainerRef} 
+                className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-gray-50/95 to-gray-100/95 dark:from-gray-900/95 dark:to-gray-900/90 backdrop-blur-sm"
+              >
+                {/* Loading Animation */}
+                {aiLoading && (
+                  <div className="flex items-start mb-4 px-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-2 flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></div>
+                    </div>
+                    <div className="flex space-x-1.5 items-center bg-white dark:bg-gray-800 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+                      <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                )}
                 <style jsx>{`
+                  @keyframes borderFlow {
+                    0% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                  }
                   .ai-chat-dialog {
                     display: flex;
                     flex-direction: column;
                     height: 100%;
+                    position: relative;
+                  }
+                  @keyframes bounce {
+                    0%, 60%, 100% { transform: translateY(0); }
+                    30% { transform: translateY(-4px); }
+                  }
+                  
+                  /* Smooth transitions for message interactions */
+                  .transition-all {
+                    transition-property: all;
+                    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                    transition-duration: 150ms;
+                  }
+                  
+                  /* Smooth scroll behavior for all scrollable elements */
+                  * {
+                    scroll-behavior: smooth;
                   }
                   .chat-messages {
                     scrollbar-width: thin;
@@ -5598,42 +5696,131 @@ const VideoPlayer = () => {
                     height: 100%;
                     overflow-y: auto;
                     scroll-behavior: smooth;
+                    padding: 0.5rem;
                   }
                   .chat-messages::-webkit-scrollbar {
                     width: 6px;
                   }
                   .chat-messages::-webkit-scrollbar-track {
-                    background: #f3f4f6;
-                    border-radius: 3px;
+                    background: rgba(243, 244, 246, 0.5);
+                    border-radius: 10px;
                   }
                   .chat-messages::-webkit-scrollbar-thumb {
-                    background-color: #9ca3af;
-                    border-radius: 3px;
+                    background-color: rgba(156, 163, 175, 0.5);
+                    border-radius: 10px;
+                    transition: background-color 0.2s;
+                  }
+                  .chat-messages::-webkit-scrollbar-thumb:hover {
+                    background-color: rgba(107, 114, 128, 0.7);
                   }
                   .dark .chat-messages::-webkit-scrollbar-track {
-                    background: #374151;
+                    background: rgba(31, 41, 55, 0.5);
                   }
                   .dark .chat-messages::-webkit-scrollbar-thumb {
-                    background-color: #4b5563;
+                    background-color: rgba(75, 85, 99, 0.5);
+                  }
+                  .dark .chat-messages::-webkit-scrollbar-thumb:hover {
+                    background-color: rgba(107, 114, 128, 0.7);
+                  }
+                  @keyframes messageIn {
+                    from {
+                      opacity: 0;
+                      transform: translateY(10px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
                   }
                 `}</style>
                 
                 <div className="space-y-4">
                   {aiResponses.length === 0 ? (
-                    <div className="text-center text-gray-500 mt-8">
-                      <p>Ask me anything about this video or topic!</p>
+                    <div className="flex flex-col items-center justify-center h-full py-8 px-4 text-center">
+                      <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">AI Assistant</h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-md">Ask me anything about this video or topic! I'm here to help.</p>
                     </div>
                   ) : (
                     aiResponses.map((item, index) => (
-                      <div key={index} className="space-y-2">
+                      <div key={index} className="space-y-3 animate-messageIn" style={{ animation: 'messageIn 0.3s ease-out' }}>
                         <div className="flex justify-end">
-                          <div className="bg-blue-600 text-white rounded-lg p-3 max-w-[80%] shadow-sm">
-                            {item.question}
+                          <div 
+                            className="bg-blue-600 text-white rounded-2xl rounded-tr-none px-4 py-2.5 max-w-[85%] shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              const messageElement = e.currentTarget;
+                              // Find the first line of text in the message
+                              const firstLine = messageElement.querySelector('p');
+                              if (firstLine) {
+                                firstLine.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              } else {
+                                messageElement.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              }
+                              messageElement.classList.add('ring-2', 'ring-blue-300');
+                              setTimeout(() => {
+                                messageElement.classList.remove('ring-2', 'ring-blue-300');
+                              }, 1000);
+                            }}
+                            title="Double click to highlight"
+                          >
+                            <p className="text-sm leading-relaxed select-text">{item.question}</p>
+                            <div className="text-right mt-1">
+                              <span className="text-xs opacity-70">You</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex justify-start">
-                          <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg p-3 max-w-[80%] shadow-sm">
-                            {item.answer || '...'}
+                          <div 
+                            className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%] shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              const messageElement = e.currentTarget;
+                              // Find the first line of text in the message
+                              const firstLine = messageElement.querySelector('p');
+                              if (firstLine) {
+                                firstLine.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              } else {
+                                messageElement.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              }
+                              messageElement.classList.add('ring-2', 'ring-blue-400');
+                              setTimeout(() => {
+                                messageElement.classList.remove('ring-2', 'ring-blue-400');
+                              }, 1000);
+                            }}
+                            title="Double click to highlight"
+                          >
+                            <p className="text-sm leading-relaxed whitespace-pre-line select-text">
+                              {item.answer ? item.answer.replace(/\*/g, '') : '...'}
+                            </p>
+                            <div className="flex items-center mt-1.5">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mr-1.5">
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                  <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.84 8.84 0 01-4.016-.95 1 1 0 11.908-1.778 6.84 6.84 0 003.108.728 6.001 6.001 0 10-6-6c.001.434.052.864.153 1.28a1 1 0 01-1.93.52A8.003 8.003 0 0110 3c4.418 0 8 3.134 8 7z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">AI Assistant</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -5641,16 +5828,16 @@ const VideoPlayer = () => {
                   )}
                   {aiLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-                        <div className="flex space-x-2">
-                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
-                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-md border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                         </div>
                       </div>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} className="h-4" />
                 </div>
               </div>
             </div>

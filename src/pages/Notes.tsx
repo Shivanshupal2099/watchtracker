@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, FileText, Link as LinkIcon, Bookmark, X, File, FileType, BookOpen, FileArchive, FileEdit } from 'lucide-react';
+import { Plus, Search, FileText, Link as LinkIcon, Bookmark, X, FileType, FileEdit, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { useTheme } from 'next-themes';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -17,17 +13,26 @@ import {
 
 type NoteType = 'note' | 'pdf' | 'link' | 'bookmark';
 
-type Note = {
+interface Note {
   id: string;
   title: string;
   content: string;
   type: NoteType;
   createdAt: Date;
   updatedAt: Date;
-  tags?: string[];
-};
+  tags: string[];
+}
 
-const noteTypeConfig = {
+interface NoteTypeConfig {
+  [key: string]: {
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bgColor: string;
+    label: string;
+  };
+}
+
+const noteTypeConfig: NoteTypeConfig = {
   note: {
     icon: FileText,
     color: 'text-blue-500',
@@ -55,19 +60,26 @@ const noteTypeConfig = {
 };
 
 export default function Notes() {
-  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<NoteType | 'all'>('all');
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('notes');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [isAdding, setIsAdding] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [newNote, setNewNote] = useState<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>({
     title: '',
     content: '',
     type: 'note',
     tags: [],
   });
+  const [newTag, setNewTag] = useState('');
 
-  const filteredNotes = notes.filter(note => {
+  const filteredNotes = notes.filter((note: Note) => {
     const matchesSearch = 
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,41 +89,81 @@ export default function Notes() {
     return note.type === activeTab && matchesSearch;
   });
 
-  const notesByType = (type: NoteType) => 
-    notes.filter(note => note.type === type);
+  const notesByType = (type: NoteType): Note[] => 
+    notes.filter((note: Note) => note.type === type);
+
+  // Save notes to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notes', JSON.stringify(notes));
+    }
+  }, [notes]);
 
   const handleAddNote = () => {
     if (!newNote.title.trim()) return;
     
     const note: Note = {
-      id: Date.now().toString(),
-      title: newNote.title,
-      content: newNote.content,
+      id: editingNote?.id || Date.now().toString(),
+      title: newNote.title.trim(),
+      content: newNote.content.trim(),
       type: newNote.type,
-      createdAt: new Date(),
+      tags: newNote.tags,
+      createdAt: editingNote?.createdAt || new Date(),
       updatedAt: new Date(),
     };
 
-    setNotes([...notes, note]);
-    setNewNote({ title: '', content: '', type: 'note' });
+    if (editingNote) {
+      setNotes(notes.map(n => n.id === editingNote.id ? note : n));
+      setEditingNote(null);
+    } else {
+      setNotes([...notes, note]);
+    }
+    
+    setNewNote({ title: '', content: '', type: 'note', tags: [] });
     setIsAdding(false);
   };
 
-  const NoteIcon = ({ type }: { type: NoteType }) => {
-    const { icon: Icon, color } = noteTypeConfig[type];
-    return <Icon className={`w-5 h-5 ${color}`} />;
+  const handleEditNote = (note: Note) => {
+    setNewNote({
+      title: note.title,
+      content: note.content,
+      type: note.type,
+      tags: [...note.tags]
+    });
+    setEditingNote(note);
+    setIsAdding(true);
   };
 
-  const NoteTypeBadge = ({ type }: { type: NoteType }) => {
-    const { label, bgColor } = noteTypeConfig[type];
-    return (
-      <span className={`text-xs px-2 py-1 rounded-full ${bgColor} text-foreground/80`}>
-        {label}
-      </span>
-    );
+  const handleDeleteNote = (id: string) => {
+    if (confirm('Are you sure you want to delete this note?')) {
+      setNotes(notes.filter(note => note.id !== id));
+      if (editingNote?.id === id) {
+        setEditingNote(null);
+        setIsAdding(false);
+      }
+    }
   };
 
-  const EmptyState = ({ type = 'all' }: { type?: NoteType | 'all' }) => {
+  const addTag = () => {
+    if (newTag.trim() && !newNote.tags.includes(newTag.trim())) {
+      setNewNote({
+        ...newNote,
+        tags: [...newNote.tags, newTag.trim()]
+      });
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setNewNote({
+      ...newNote,
+      tags: newNote.tags.filter(tag => tag !== tagToRemove)
+    });
+  };
+
+
+
+  const EmptyState: React.FC<{ type?: NoteType | 'all' }> = ({ type = 'all' }) => {
     const { icon: Icon, color, label } = 
       type === 'all' ? { icon: FileText, color: 'text-muted-foreground', label: 'notes' } 
       : noteTypeConfig[type as NoteType];
@@ -212,8 +264,16 @@ export default function Notes() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Add New Note</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsAdding(false)}>
+              <CardTitle>{editingNote ? 'Edit Note' : 'Add New Note'}</CardTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingNote(null);
+                  setNewNote({ title: '', content: '', type: 'note', tags: [] });
+                }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -242,7 +302,7 @@ export default function Notes() {
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={newNote.type}
-                  onChange={(e) => setNewNote({...newNote, type: e.target.value as any})}
+                  onChange={(e) => setNewNote({...newNote, type: e.target.value as NoteType})}
                 >
                   <option value="note">Note</option>
                   <option value="pdf">PDF</option>
@@ -250,19 +310,76 @@ export default function Notes() {
                   <option value="bookmark">Bookmark</option>
                 </select>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tags</label>
+                <div className="flex gap-2 flex-wrap">
+                  {newNote.tags.map(tag => (
+                    <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-muted rounded-full">
+                      {tag}
+                      <button 
+                        type="button" 
+                        onClick={() => removeTag(tag)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a tag..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addTag} variant="outline">
+                    Add
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button onClick={handleAddNote}>Save Note</Button>
+          <CardFooter className="flex justify-between">
+            {editingNote && (
+              <Button 
+                variant="destructive" 
+                onClick={() => handleDeleteNote(editingNote.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            )}
+            <div className="ml-auto flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingNote(null);
+                  setNewNote({ title: '', content: '', type: 'note', tags: [] });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddNote}>
+                {editingNote ? 'Update Note' : 'Save Note'}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
-      )}
+      )} 
 
         <TabsContent value="all" className="mt-0">
           {filteredNotes.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredNotes.map((note) => (
-                <NoteCard key={note.id} note={note} />
+                <NoteCard 
+                  key={note.id} 
+                  note={note} 
+                  onEdit={handleEditNote}
+                  onDelete={handleDeleteNote}
+                />
               ))}
             </div>
           ) : (
@@ -277,7 +394,12 @@ export default function Notes() {
                 {filteredNotes
                   .filter(note => note.type === type)
                   .map((note) => (
-                    <NoteCard key={note.id} note={note} />
+                    <NoteCard 
+                  key={note.id} 
+                  note={note} 
+                  onEdit={handleEditNote}
+                  onDelete={handleDeleteNote}
+                />
                   ))}
               </div>
             ) : (
@@ -290,11 +412,17 @@ export default function Notes() {
   );
 }
 
-const NoteCard = ({ note }: { note: Note }) => {
-  const { icon: Icon, color } = noteTypeConfig[note.type];
-  const [isHovered, setIsHovered] = useState(false);
+interface NoteCardProps {
+  note: Note;
+  onEdit: (note: Note) => void;
+  onDelete: (id: string) => void;
+}
 
-  return (
+const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
+  const { icon: Icon, color } = noteTypeConfig[note.type];
+  const [, setIsHovered] = useState(false);
+
+  return (  
     <Card 
       className="h-full flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden group"
       onMouseEnter={() => setIsHovered(true)}
@@ -319,17 +447,30 @@ const NoteCard = ({ note }: { note: Note }) => {
               })}
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle edit
-            }}
-          >
-            <FileEdit className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(note);
+              }}
+            >
+              <FileEdit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(note.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1">
