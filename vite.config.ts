@@ -35,6 +35,7 @@ export default defineConfig({
       },
     }),
   ],
+  base:process.env.VITE_BASE_PATH || "/watchtracker",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
